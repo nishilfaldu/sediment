@@ -1,0 +1,38 @@
+@import "tailwindcss";
+@import "./base.css";
+
+/*
+ * Suppress native HTML drag of images and links. Without this, dragging an OG
+ * thumbnail or a card's link starts a browser drag carrying the image/URL,
+ * which the canvas drop handler then turns into a bogus new card. Card movement
+ * is handled by our own pointer events instead.
+ */
+img,
+a {
+  -webkit-user-drag: none;
+}
+
+/*
+ * Semantic color tokens for Sediment's blank-canvas aesthetic.
+ * Everything is white. Borders are barely visible.
+ * Change the right-hand values here to retheme the entire app.
+ */
+@theme {
+  /* Backgrounds — all white */
+  --color-surface: var(--color-white);
+  --color-panel: var(--color-white);
+  --color-card: var(--color-white);
+
+  /* Borders — very subtle */
+  --color-ui: var(--color-stone-100);
+
+  /* Text */
+  --color-primary: var(--color-stone-900);
+  --color-secondary: var(--color-stone-600);
+  --color-muted: var(--color-stone-400);
+  --color-ghost: var(--color-stone-300);
+
+  /* Accent — history panel active day */
+  --color-accent: var(--color-stone-900);
+  --color-accent-fg: var(--color-white);
+}
