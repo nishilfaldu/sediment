@@ -11,16 +11,23 @@
 
 ## Why I built this
 
-I read a lot during the day, and I have this compulsion: the moment something
-catches my eye, I need to put it somewhere. The problem was that "somewhere" kept
-changing. A bookmark here, a note there, a screenshot in my camera roll, a link
-pasted into a chat with myself. By the time I wanted to find any of it again, it
-was scattered across five apps and effectively gone.
+I get inspired by something almost every single day — a thread on Twitter, a post
+on Instagram or LinkedIn, a line in an article I am reading on the web. Every one
+of those platforms has its own save button, but that is exactly the problem: my
+inspiration ends up scattered across five different apps, each one a silo I rarely
+open again. None of those saved folders are *mine*. By the time I want any of it
+back, it is gone in practice — buried somewhere I will never think to look.
 
 So I wanted one place. Not a folder tree to maintain, not tags to invent, not a
-decision to make every time. Just one workspace per day. Whatever I run into goes
-there, and it piles up. Maybe I look back at a day, maybe I never do. The point is
-that capturing it costs nothing, and nothing leaves my machine.
+decision to make every time. Just one workspace per day. Whatever catches my eye
+goes there, and it piles up. Maybe I look back at a day, maybe I never do. The
+point is that capturing it costs nothing, and nothing leaves my machine.
+
+The real payoff is later. When I am chasing an idea and that nagging feeling hits —
+*I came across something about this once* — I do not want to dig through five apps.
+I press `Cmd+F` or `Cmd+K`, search across everything I have ever saved, and there
+it is. That ability to walk back to my own inspiration, in one place, was the
+actual reason I built this.
 
 Each day is its own canvas. Copy anything, hit the shortcut, and it settles onto
 today. That is the whole idea, and the name comes from it: layers of small things
