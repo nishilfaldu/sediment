@@ -1,34 +1,112 @@
-# sediment
+# Sediment
 
-An Electron application with React and TypeScript
+[![Electron](https://img.shields.io/badge/Electron-39-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
+[![React](https://img.shields.io/badge/React-19-20232A?style=flat-square&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![SQLite](https://img.shields.io/badge/SQLite-local--first-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 
-## Recommended IDE Setup
+> A home for everything you want to keep. Copy a tweet, an article, a quote, a
+> video, an image, press one shortcut, and it lands on today's canvas. One day,
+> one page. Things just pile up, like sediment.
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+## Why I built this
 
-## Project Setup
+I read a lot during the day, and I have this compulsion: the moment something
+catches my eye, I need to put it somewhere. The problem was that "somewhere" kept
+changing. A bookmark here, a note there, a screenshot in my camera roll, a link
+pasted into a chat with myself. By the time I wanted to find any of it again, it
+was scattered across five apps and effectively gone.
 
-### Install
+So I wanted one place. Not a folder tree to maintain, not tags to invent, not a
+decision to make every time. Just one workspace per day. Whatever I run into goes
+there, and it piles up. Maybe I look back at a day, maybe I never do. The point is
+that capturing it costs nothing, and nothing leaves my machine.
 
-```bash
-$ npm install
+Each day is its own canvas. Copy anything, hit the shortcut, and it settles onto
+today. That is the whole idea, and the name comes from it: layers of small things
+accumulating quietly over time.
+
+## What it does
+
+| | |
+|---|---|
+| **One canvas per day** | The app opens to today. Past days are there when you want them, out of the way when you do not. |
+| **One-shortcut capture** | Copy anything, press `Cmd+Shift+S`, and it saves from anywhere, with no app switching. |
+| **Auto-detected content** | Plain text, images, links, videos, and social posts are recognized automatically from whatever is on the clipboard. |
+| **Rich previews** | Links and posts get titles, descriptions, and thumbnails pulled from their page metadata. |
+| **Freeform layout** | Items live on a canvas you can drag and arrange however you like. |
+| **Full-text search** | Search across everything you have ever saved, powered by SQLite FTS. |
+| **Local-first** | Everything is stored on your device in SQLite. Nothing is uploaded anywhere. |
+
+### What gets recognized
+
+| Type | Sources |
+|---|---|
+| Video | YouTube, Vimeo |
+| Social | X / Twitter, Instagram, Bluesky |
+| Link | any other URL (with fetched page metadata) |
+| Image | image data on the clipboard |
+| Text | anything that is not a URL |
+
+## How it works
+
+Sediment is a macOS desktop app built on Electron, split across two JavaScript
+worlds that talk through a single typed bridge.
+
+- **Main process** (Node.js) owns the OS layer: the SQLite database, the global
+  `Cmd+Shift+S` shortcut, clipboard reads, local image storage, and fetching page
+  metadata for links.
+- **Renderer process** (React) is all UI. It has no direct Node access; it talks
+  to the main process only through a typed `window.api` exposed by the preload
+  bridge.
+
+When you trigger the shortcut, the main process reads the clipboard, classifies
+what it found, writes a row to SQLite, and pushes it to the canvas. For links it
+then fetches Open Graph metadata in the background and fills in the preview.
+
+```
+Renderer (React)        Preload               Main (Node.js)
+window.api.items   →    ipcRenderer.invoke →  ipcMain.handle → SQLite
+  .getByDay(dayId)  ←   Promise resolves   ←  returns rows
 ```
 
-### Development
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Desktop shell | Electron 39 via electron-vite |
+| UI | React 19 + TypeScript |
+| Styling | Tailwind CSS v4 |
+| Database | SQLite (`better-sqlite3`), main process only |
+| ORM | Drizzle ORM + drizzle-kit |
+| State | TanStack Query (server state) + Zustand (UI state) |
+| Drag + reorder | dnd-kit |
+| Page metadata | cheerio |
+| Lint + format | Biome |
+| Package manager | Bun |
+
+## Running it locally
+
+Requires [Bun](https://bun.sh/) and macOS.
 
 ```bash
-$ npm run dev
+bun install
+bun dev          # Electron + renderer with hot reload
 ```
 
-### Build
+Other useful scripts:
 
 ```bash
-# For windows
-$ npm run build:win
-
-# For macOS
-$ npm run build:mac
-
-# For Linux
-$ npm run build:linux
+bun run check              # Biome lint + format
+bun run typecheck          # tsc across main + renderer
+bunx drizzle-kit generate  # generate a migration after a schema change
+bun run build:mac          # package a macOS build
 ```
+
+## Status
+
+An ongoing personal project. The core loop — capture, auto-detect, canvas,
+previews, per-day history, and full-text search — works today. I keep adding to it
+as I find new things I want to throw onto a page and forget about until I need them.
+
+Built with [Claude Code](https://claude.com/claude-code).
