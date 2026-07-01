@@ -2,7 +2,6 @@ import { isLinkArtifact, isNote } from '@shared/item-groups'
 import type { JSX } from 'react'
 import { useMemo } from 'react'
 import { CanvasItem } from '@/components/board/canvas-item'
-import { useBoardDrop } from '@/hooks/use-board-drop'
 import { useCreateItem, useDeleteItem, useItems, useUpdateItem } from '@/hooks/use-items'
 import { useWorkspaceTab, type WorkspaceTab } from '@/stores/workspace-tab'
 
@@ -23,7 +22,6 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
   const deleteItem = useDeleteItem(dayId)
   const tab = useWorkspaceTab((s) => s.getTab(dayId))
   const setTab = useWorkspaceTab((s) => s.setTab)
-  const { isDraggingOver, dropHandlers } = useBoardDrop(dayId)
 
   const linkItems = useMemo(() => items.filter((item) => isLinkArtifact(item.type)), [items])
   const noteItems = useMemo(() => items.filter((item) => isNote(item.type)), [items])
@@ -45,12 +43,7 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
   }
 
   return (
-    <div
-      className={`flex h-full w-full flex-col overflow-auto bg-white ${
-        isDraggingOver ? 'ring-2 ring-inset ring-sky-400/50 bg-sky-50/30' : ''
-      }`}
-      {...dropHandlers}
-    >
+    <div className="flex h-full w-full flex-col overflow-auto bg-white">
       <div className="flex shrink-0 items-center justify-between gap-4 border-b border-stone-100 px-6 py-3">
         <div className="flex items-center gap-4">
           <button
