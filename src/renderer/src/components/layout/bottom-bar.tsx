@@ -8,7 +8,7 @@ import { useUI } from '@/stores/ui'
 
 export function BottomBar(): JSX.Element {
   const { dayId, goToToday } = useCurrentDay()
-  const { toggleSidebar, sidebarOpen } = useUI()
+  const { toggleHistory, historyOpen } = useUI()
   const { data: items = [] } = useItems(dayId)
 
   const isToday = dayId === todayId()
@@ -16,10 +16,8 @@ export function BottomBar(): JSX.Element {
 
   return (
     <div className="flex h-8 shrink-0 items-center justify-between border-t border-stone-100 bg-white px-4 text-xs text-stone-400">
-      {/* Left — item count */}
       <span>{count === 0 ? 'Nothing yet' : `${count} ${count === 1 ? 'item' : 'items'}`}</span>
 
-      {/* Centre — current day; click to jump back to today if on a past day */}
       <button
         type="button"
         onClick={isToday ? undefined : goToToday}
@@ -29,14 +27,13 @@ export function BottomBar(): JSX.Element {
         {!isToday && <span className="ml-1 text-stone-300">↩ today</span>}
       </button>
 
-      {/* Right — export + history toggle + capture hint */}
       <div className="flex items-center gap-3">
         {count > 0 && <ExportMenu dayId={dayId} />}
         <span className="hidden sm:inline">⌘⇧S to capture</span>
-        {!sidebarOpen && (
+        {!historyOpen && (
           <button
             type="button"
-            onClick={toggleSidebar}
+            onClick={toggleHistory}
             className="flex items-center gap-1 hover:text-stone-600 transition-colors"
             aria-label="Open history"
           >

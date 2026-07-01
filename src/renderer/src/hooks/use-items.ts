@@ -1,36 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { Item, ItemType, WidthHint } from '@/types'
+import type { CreateItemPayload } from '@shared/contracts'
+import type { Item } from '@/types'
+
+export type { CreateItemPayload }
 
 export function useItems(dayId: string) {
   return useQuery({
     queryKey: ['items', dayId],
-    queryFn: () => window.api.items.getByDay(dayId) as Promise<Item[]>
+    queryFn: () => window.api.items.getByDay(dayId)
   })
-}
-
-export interface CreatePayload {
-  dayId: string
-  type: ItemType
-  content?: string
-  sourceUrl?: string
-  platform?: string
-  dataUrl?: string
-  widthHint?: WidthHint
-  x?: number
-  y?: number
 }
 
 export function useCreateItem() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (payload: CreatePayload) => {
-      // Ensure the day row exists before inserting the item (FK constraint)
-      await window.api.days.getOrCreate(payload.dayId)
-      return window.api.items.create(payload) as Promise<Item>
-    },
+    mutationFn: (payload: CreateItemPayload) => window.api.items.create(payload),
     onSuccess: (item: Item) => {
       qc.invalidateQueries({ queryKey: ['items', item.dayId] })
-      // Invalidate days list so sidebar reflects the new day if it's the first item
       qc.invalidateQueries({ queryKey: ['days'] })
     }
   })
@@ -39,8 +25,8 @@ export function useCreateItem() {
 export function useUpdateItem() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<Item> }) =>
-      window.api.items.update(id, patch) as Promise<Item>,
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<CreateItemPayload> }) =>
+      window.api.items.update(id, patch),
     onSuccess: (item: Item) => {
       qc.invalidateQueries({ queryKey: ['items', item.dayId] })
     }
@@ -50,7 +36,7 @@ export function useUpdateItem() {
 export function useDeleteItem(dayId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => window.api.items.delete(id) as Promise<void>,
+    mutationFn: (id: string) => window.api.items.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['items', dayId] })
     }
@@ -61,9 +47,7 @@ export function useBringToFront() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, dayId }: { id: string; dayId: string }) =>
-      window.api.items.bringToFront(id, dayId) as Promise<Item>,
-    // Optimistically bump position above the current max so the z-index updates
-    // instantly on click — no wait for the IPC round-trip.
+      window.api.items.bringToFront(id, dayId),
     onMutate: async ({ id, dayId }) => {
       await qc.cancelQueries({ queryKey: ['items', dayId] })
       const previous = qc.getQueryData<Item[]>(['items', dayId])
@@ -76,9 +60,6 @@ export function useBringToFront() {
     onError: (_err, _vars, context) => {
       if (context?.previous) qc.setQueryData(['items', context.dayId], context.previous)
     }
-    // No onSettled invalidate: this fires on every click of a non-top card, and
-    // the optimistic position bump already matches what the server computes
-    // (max + 1). Skipping the refetch avoids re-rendering every card on a click.
   })
 }
 
@@ -86,9 +67,7 @@ export function useMoveItem() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, x, y }: { id: string; x: number; y: number; dayId: string }) =>
-      window.api.items.move(id, x, y) as Promise<Item>,
-    // Optimistically update the cache so the item renders at the new position
-    // immediately — no snap-back while the IPC round-trip is in-flight.
+      window.api.items.move(id, x, y),
     onMutate: async ({ id, x, y, dayId }) => {
       await qc.cancelQueries({ queryKey: ['items', dayId] })
       const previous = qc.getQueryData<Item[]>(['items', dayId])
@@ -101,9 +80,6 @@ export function useMoveItem() {
       if (context?.previous) {
         qc.setQueryData(['items', context.dayId], context.previous)
       }
-    },
-    onSettled: (_data, _err, { dayId }) => {
-      qc.invalidateQueries({ queryKey: ['items', dayId] })
     }
   })
 }

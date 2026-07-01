@@ -87,7 +87,7 @@ window.api.items   →    ipcRenderer.invoke →  ipcMain.handle → SQLite
 | Database | SQLite (`better-sqlite3`), main process only |
 | ORM | Drizzle ORM + drizzle-kit |
 | State | TanStack Query (server state) + Zustand (UI state) |
-| Drag + reorder | dnd-kit |
+| Canvas layout | Freeform absolute positioning with custom pointer drag |
 | Page metadata | cheerio |
 | Lint + format | Biome |
 | Package manager | Bun |

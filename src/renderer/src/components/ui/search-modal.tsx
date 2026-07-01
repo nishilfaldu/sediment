@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { TYPE_LABELS } from '@/hooks/use-clipboard-hotkey'
+import { TYPE_LABELS } from '@shared/labels'
 import { useSearch } from '@/hooks/use-search'
 import { formatDaySidebar } from '@/lib/dates'
 import { useCurrentDay } from '@/stores/current-day'

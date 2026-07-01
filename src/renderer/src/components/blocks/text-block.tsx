@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { detectUrl } from '@/lib/url-detect'
+import { detectUrl } from '@shared/detect-url'
 import type { Item, ItemType, Platform } from '@/types'
 
 export interface TextBlockProps {
@@ -21,8 +21,6 @@ export function TextBlock({
   const [editing, setEditing] = useState(autoFocus)
   const [draft, setDraft] = useState(item.content ?? '')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  // Set to true synchronously in upgrade() so that the blur-triggered commit()
-  // that fires immediately after a paste does not double-fire onEmpty().
   const upgradingRef = useRef(false)
 
   function resize(): void {
@@ -48,19 +46,16 @@ export function TextBlock({
   }
 
   function commit(): void {
-    // A paste-triggered upgrade already fired; the blur that follows is spurious
     if (upgradingRef.current) {
       upgradingRef.current = false
       return
     }
     const trimmed = draft.trim()
-    // URL typed/pasted and committed → upgrade to rich card
     const detected = detectUrl(trimmed)
     if (detected) {
       upgrade(detected.type, detected.sourceUrl, detected.platform)
       return
     }
-    // Empty → delete the item (covers "created but never typed" case)
     if (!trimmed) {
       onEmpty()
       setEditing(false)
@@ -75,8 +70,6 @@ export function TextBlock({
   function handlePaste(e: React.ClipboardEvent): void {
     const pasted = e.clipboardData.getData('text').trim()
     const detected = detectUrl(pasted)
-    // Auto-upgrade when a URL is pasted into an empty block.
-    // upgradingRef is set synchronously so the subsequent blur-commit is a no-op.
     if (detected && !draft.trim()) {
       e.preventDefault()
       upgrade(detected.type, detected.sourceUrl, detected.platform)
