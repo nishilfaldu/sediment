@@ -31,7 +31,7 @@ A personal content collection desktop app for macOS. Throughout the day you enco
 | Database | SQLite via `better-sqlite3` (main process only) |
 | ORM | Drizzle ORM + drizzle-kit |
 | Renderer state | TanStack Query v5 (server state) + Zustand v5 (UI state) |
-| Drag-reorder | @dnd-kit/sortable |
+| Canvas layout | Freeform absolute positioning with custom pointer drag |
 | OG metadata | cheerio (main process only) |
 | Lint + format | Biome (replaces ESLint + Prettier) |
 | Package manager | Bun |
@@ -40,7 +40,10 @@ A personal content collection desktop app for macOS. Throughout the day you enco
 
 ## Architecture
 
-Two separate JS environments — understanding the boundary is critical.
+Three JS environments plus a shared contract layer — understanding the boundaries is critical.
+
+### Shared (`src/shared/`)
+Pure TypeScript modules imported by main, preload, and renderer: IPC types (`Api`, `CreateItemPayload`), domain types (`Item`, `ItemType`), URL detection (`detectContent`), and labels. Keeps the IPC contract typed without the renderer importing main-process modules.
 
 ### Main Process (`src/main/`)
 Node.js. Owns the OS layer: SQLite, filesystem (`userData/images/`), global shortcuts, clipboard, OG fetching, all `ipcMain.handle` registrations. Think of it as the backend.
@@ -49,7 +52,7 @@ Node.js. Owns the OS layer: SQLite, filesystem (`userData/images/`), global shor
 Chromium + React. All UI. No direct Node.js access — talks to main exclusively through the preload bridge.
 
 ### Preload (`src/preload/`)
-Exposes a typed `window.api` object via `contextBridge`. The **only** channel between renderer and main. Shape declared in `src/preload/index.d.ts`.
+Exposes a typed `window.api` object via `contextBridge`. The **only** channel between renderer and main. Shape typed via `@shared/ipc`.
 
 ```
 Renderer (React)        Preload               Main (Node.js)

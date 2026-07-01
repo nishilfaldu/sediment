@@ -53,6 +53,18 @@ If the schema changes, all derived types update automatically. No manual interfa
 
 ---
 
+### Use `src/shared/` for cross-process contracts when the renderer can't import main
+
+The renderer cannot import `src/main/db/schema.ts` (it transitively pulls in `better-sqlite3`). Instead of manually mirroring types in the renderer and casting `unknown` at every IPC call:
+
+- Put domain types (`Item`, `ItemType`), IPC shapes (`Api`, `CreateItemPayload`), and pure logic (`detectContent`) in `src/shared/`
+- Import from `@shared/*` in main, preload, and renderer
+- Type the preload bridge as `Api` so hooks call `window.api.items.create(payload)` without casts
+
+Main still derives insert/select types from Drizzle for DB operations; shared types mirror the row shape for IPC.
+
+---
+
 ### Use `as const` arrays to define enums, derive the union type from them
 
 Instead of a bare `type ItemType = 'text' | 'image' | ...` and a separate runtime array for validation, combine both into one definition:

@@ -1,8 +1,7 @@
 import { load } from 'cheerio'
-import { eq } from 'drizzle-orm'
 import { BrowserWindow } from 'electron'
-import { getDb } from '../db'
-import { items } from '../db/schema'
+import type { MetadataPatch } from '@shared/contracts'
+import { patchItemMetadata } from './item-metadata'
 
 function getMeta($: ReturnType<typeof load>, ...props: string[]): string | null {
   for (const prop of props) {
@@ -30,14 +29,7 @@ function isVimeoUrl(url: string): boolean {
   }
 }
 
-// Twitter/X blocks OG tag scraping; use their official oEmbed endpoint instead.
-// Returns author handle as title and extracted tweet text as description.
-async function fetchTwitterMeta(url: string): Promise<{
-  title: string | null
-  description: string | null
-  thumbnail: string | null
-  metadata: string | null
-}> {
+async function fetchTwitterMeta(url: string): Promise<MetadataPatch> {
   const endpoint = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`
   const res = await fetch(endpoint, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Sediment/1.0)' },
@@ -51,7 +43,6 @@ async function fetchTwitterMeta(url: string): Promise<{
     html?: string
   }
 
-  // oEmbed HTML is a <blockquote> with the tweet text in a <p> tag
   const $ = load(data.html ?? '')
   const tweetText = $('blockquote > p').first().text().trim() || null
 
@@ -63,13 +54,7 @@ async function fetchTwitterMeta(url: string): Promise<{
   }
 }
 
-// Vimeo's OG tags can be blocked; oEmbed is the official way to get metadata.
-async function fetchVimeoMeta(url: string): Promise<{
-  title: string | null
-  description: string | null
-  thumbnail: string | null
-  metadata: string | null
-}> {
+async function fetchVimeoMeta(url: string): Promise<MetadataPatch> {
   const endpoint = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`
   const res = await fetch(endpoint, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Sediment/1.0)' },
@@ -96,16 +81,9 @@ function pushUpdate(itemId: string, dayId: string): void {
   BrowserWindow.getAllWindows()[0]?.webContents.send('item:metadataUpdated', { id: itemId, dayId })
 }
 
-// Fetches OG/oEmbed metadata for a URL and patches the item row.
-// Failures are silently ignored — the item always lands on the board.
 export async function fetchOgMetadata(itemId: string, dayId: string, url: string): Promise<void> {
   try {
-    let meta: {
-      title: string | null
-      description: string | null
-      thumbnail: string | null
-      metadata: string | null
-    }
+    let meta: MetadataPatch
 
     if (isTwitterUrl(url)) {
       meta = await fetchTwitterMeta(url)
@@ -135,12 +113,7 @@ export async function fetchOgMetadata(itemId: string, dayId: string, url: string
       }
     }
 
-    getDb()
-      .update(items)
-      .set({ ...meta, updatedAt: Date.now() })
-      .where(eq(items.id, itemId))
-      .run()
-
+    patchItemMetadata(itemId, meta)
     pushUpdate(itemId, dayId)
   } catch {
     // Network/parse failures are non-fatal

@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
-import { ExternalLinkIcon } from '@/components/icons/external-link-icon'
+import { PLATFORM_LABELS } from '@shared/labels'
+import { CardOpenButton } from '@/components/cards/card-open-button'
 import { PlayIcon } from '@/components/icons/play-icon'
 import type { Item } from '@/types'
 
@@ -17,17 +18,11 @@ function youtubeVideoId(url: string): string | null {
   }
 }
 
-export const PLATFORM_LABELS: Record<string, string> = {
-  youtube: 'YouTube',
-  vimeo: 'Vimeo'
-}
-
 export function VideoCard({ item }: VideoCardProps): JSX.Element {
   const url = item.sourceUrl ?? ''
   const platform = item.platform ?? 'youtube'
   const label = PLATFORM_LABELS[platform] ?? platform
 
-  // YouTube thumbnails are available immediately without a network fetch
   const ytId = platform === 'youtube' ? youtubeVideoId(url) : null
   const thumbnail =
     item.thumbnail ?? (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null)
@@ -38,7 +33,6 @@ export function VideoCard({ item }: VideoCardProps): JSX.Element {
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Thumbnail with play button overlay */}
       {thumbnail && (
         <button
           type="button"
@@ -59,25 +53,17 @@ export function VideoCard({ item }: VideoCardProps): JSX.Element {
         </button>
       )}
 
-      {/* Title */}
       {item.title ? (
         <p className="text-sm font-medium leading-snug text-stone-800 line-clamp-2">{item.title}</p>
       ) : (
         <p className="text-sm text-stone-400 break-all line-clamp-1">{url}</p>
       )}
 
-      {/* Footer: platform badge + open */}
       <div className="flex items-center justify-between pt-1">
         <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-500">
           {label}
         </span>
-        <button
-          type="button"
-          onClick={open}
-          className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-stone-400 hover:bg-stone-100 hover:text-stone-600"
-        >
-          Open <ExternalLinkIcon />
-        </button>
+        <CardOpenButton url={url} />
       </div>
     </div>
   )

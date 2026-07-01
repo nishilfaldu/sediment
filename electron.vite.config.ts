@@ -22,10 +22,13 @@ function copyMigrationsPlugin(): Plugin {
   }
 }
 
+const sharedAlias = { '@shared': resolve('src/shared') }
+
 export default defineConfig({
   main: {
     // externalizeDeps: true is the default in electron-vite v5 — all node_modules
     // are kept as require/import calls rather than being bundled.
+    resolve: { alias: sharedAlias },
     plugins: [copyMigrationsPlugin()],
     build: {
       rollupOptions: {
@@ -37,10 +40,13 @@ export default defineConfig({
       }
     }
   },
-  preload: {},
+  preload: {
+    resolve: { alias: sharedAlias }
+  },
   renderer: {
     resolve: {
       alias: {
+        '@shared': resolve('src/shared'),
         // @/ maps to the renderer source root — consistent with React/Vite ecosystem convention
         '@': resolve('src/renderer/src')
       }
