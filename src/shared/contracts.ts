@@ -7,6 +7,10 @@ export interface CreateItemPayload {
   content?: string | null
   sourceUrl?: string | null
   platform?: Platform | null
+  title?: string | null
+  description?: string | null
+  thumbnail?: string | null
+  metadata?: string | null
   x?: number
   y?: number
 }

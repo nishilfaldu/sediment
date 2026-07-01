@@ -1,9 +1,7 @@
 import { useRef, useState } from 'react'
 import { detectUrl } from '@shared/detect-url'
 import { useCreateItem } from '@/hooks/use-items'
-import { findFreeSpot, measureCardRects } from '@/lib/layout'
-
-const CASCADE = 24
+import { usePasteModal } from '@/stores/paste-modal'
 
 export interface BoardDropHandlers {
   onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void
@@ -36,6 +34,7 @@ function firstUri(uriList: string): string | null {
 
 export function useBoardDrop(dayId: string): UseBoardDrop {
   const createItem = useCreateItem()
+  const openPasteModal = usePasteModal((s) => s.openWith)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const dragDepth = useRef(0)
 
@@ -63,26 +62,18 @@ export function useBoardDrop(dayId: string): UseBoardDrop {
     dragDepth.current = 0
     setIsDraggingOver(false)
 
-    const rect = e.currentTarget.getBoundingClientRect()
-    const base = findFreeSpot(
-      measureCardRects(e.currentTarget),
-      Math.round(e.clientX - rect.left),
-      Math.round(e.clientY - rect.top)
-    )
     const imageFiles = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'))
     const uriList = e.dataTransfer.getData('text/uri-list')
     const plainText = e.dataTransfer.getData('text/plain')
 
     if (imageFiles.length > 0) {
       const dataUrls = await Promise.all(imageFiles.map((f) => readAsDataUrl(f).catch(() => null)))
-      dataUrls.forEach((dataUrl, i) => {
+      dataUrls.forEach((dataUrl) => {
         if (!dataUrl) return
         createItem.mutate({
           dayId,
           type: 'image',
-          content: dataUrl,
-          x: base.x + i * CASCADE,
-          y: base.y + i * CASCADE
+          content: dataUrl
         })
       })
       return
@@ -93,17 +84,11 @@ export function useBoardDrop(dayId: string): UseBoardDrop {
 
     const detected = detectUrl(raw)
     if (detected) {
-      createItem.mutate({
-        dayId,
-        type: detected.type,
-        sourceUrl: detected.sourceUrl,
-        platform: detected.platform,
-        x: base.x,
-        y: base.y
-      })
-    } else {
-      createItem.mutate({ dayId, type: 'text', content: raw, x: base.x, y: base.y })
+      openPasteModal(detected.sourceUrl, { dayId })
+      return
     }
+
+    createItem.mutate({ dayId, type: 'text', content: raw })
   }
 
   return {

@@ -21,6 +21,9 @@ const api: Api = {
   search: {
     query: (q: string) => ipcRenderer.invoke('search:query', q)
   },
+  metadata: {
+    preview: (url: string) => ipcRenderer.invoke('metadata:preview', url)
+  },
   export: {
     day: (dayId: string) => ipcRenderer.invoke('export:day', dayId),
     copyMarkdown: (dayId: string) => ipcRenderer.invoke('export:copyMarkdown', dayId),

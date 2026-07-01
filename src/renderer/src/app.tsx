@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
 import { AppShell } from '@/components/layout/app-shell'
+import { PasteModal } from '@/components/ui/paste-modal'
 import { SearchModal } from '@/components/ui/search-modal'
 import { Toast } from '@/components/ui/toast'
 import { useClipboardHotkey } from '@/hooks/use-clipboard-hotkey'
@@ -18,6 +19,7 @@ function App(): JSX.Element {
     <>
       <AppShell />
       <SearchModal />
+      <PasteModal />
       <Toast />
     </>
   )

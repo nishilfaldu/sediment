@@ -1,20 +1,23 @@
 import type { JSX } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { detectUrl } from '@shared/detect-url'
-import type { Item, ItemType, Platform } from '@/types'
+import { usePasteModal } from '@/stores/paste-modal'
+import type { Item } from '@/types'
 
 export interface TextBlockProps {
   item: Item
+  dayId: string
+  itemId: string
   onSave: (content: string) => void
-  onUpgrade: (type: ItemType, sourceUrl: string, platform?: Platform) => void
   onEmpty: () => void
   autoFocus?: boolean
 }
 
 export function TextBlock({
   item,
+  dayId,
+  itemId,
   onSave,
-  onUpgrade,
   onEmpty,
   autoFocus = false
 }: TextBlockProps): JSX.Element {
@@ -22,6 +25,7 @@ export function TextBlock({
   const [draft, setDraft] = useState(item.content ?? '')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const upgradingRef = useRef(false)
+  const openPasteModal = usePasteModal((s) => s.openWith)
 
   function resize(): void {
     const el = textareaRef.current
@@ -39,10 +43,10 @@ export function TextBlock({
     }
   }, [editing])
 
-  function upgrade(type: ItemType, sourceUrl: string, platform?: Platform): void {
+  function openLinkModal(url: string): void {
     upgradingRef.current = true
     setEditing(false)
-    onUpgrade(type, sourceUrl, platform)
+    openPasteModal(url, { dayId, upgradeItemId: itemId })
   }
 
   function commit(): void {
@@ -53,7 +57,7 @@ export function TextBlock({
     const trimmed = draft.trim()
     const detected = detectUrl(trimmed)
     if (detected) {
-      upgrade(detected.type, detected.sourceUrl, detected.platform)
+      openLinkModal(detected.sourceUrl)
       return
     }
     if (!trimmed) {
@@ -72,7 +76,7 @@ export function TextBlock({
     const detected = detectUrl(pasted)
     if (detected && !draft.trim()) {
       e.preventDefault()
-      upgrade(detected.type, detected.sourceUrl, detected.platform)
+      openLinkModal(detected.sourceUrl)
     }
   }
 
@@ -101,7 +105,6 @@ export function TextBlock({
         onBlur={commit}
         onPaste={handlePaste}
         onKeyDown={handleKeyDown}
-        onPointerDown={(e) => e.stopPropagation()}
         rows={1}
       />
     )

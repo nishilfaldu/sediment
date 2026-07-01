@@ -29,7 +29,7 @@ export function BottomBar(): JSX.Element {
 
       <div className="flex items-center gap-3">
         {count > 0 && <ExportMenu dayId={dayId} />}
-        <span className="hidden sm:inline">⌘⇧S to capture</span>
+        <span className="hidden sm:inline">⌘⇧S to capture · Add link for URLs</span>
         {!historyOpen && (
           <button
             type="button"

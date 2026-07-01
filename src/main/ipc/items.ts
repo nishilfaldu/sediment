@@ -13,7 +13,12 @@ type CreateItemInput = Omit<NewItem, 'id' | 'createdAt' | 'updatedAt'>
 export function registerItemsHandlers(): void {
   ipcMain.handle('items:getByDay', (_e, dayId: string) => {
     const db = getDb()
-    return db.select().from(items).where(eq(items.dayId, dayId)).orderBy(asc(items.createdAt)).all()
+    return db
+      .select()
+      .from(items)
+      .where(eq(items.dayId, dayId))
+      .orderBy(asc(items.position), asc(items.createdAt))
+      .all()
   })
 
   // Insert a new item. Ensures the day row exists (FK) in the same flow.
@@ -59,7 +64,7 @@ export function registerItemsHandlers(): void {
       .returning()
       .get()
 
-    if (needsOgFetch(item)) {
+    if (needsOgFetch(item) && !item.title) {
       fetchOgMetadata(item.id, item.dayId, item.sourceUrl as string)
     }
 

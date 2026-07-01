@@ -1,4 +1,4 @@
-import type { CreateItemPayload } from './contracts'
+import type { CreateItemPayload, MetadataPatch } from './contracts'
 import type { ShortcutPayload } from './shortcut'
 import type { Day, Item, SearchResult } from './types'
 
@@ -25,6 +25,9 @@ export interface Api {
   }
   search: {
     query: (q: string) => Promise<SearchResult[]>
+  }
+  metadata: {
+    preview: (url: string) => Promise<MetadataPatch>
   }
   export: {
     day: (dayId: string) => Promise<ExportResult>
