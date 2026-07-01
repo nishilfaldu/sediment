@@ -1,5 +1,5 @@
 import type { ClipboardCapturePayload } from './clipboard-capture'
-import type { CreateItemPayload, MetadataPatch } from './contracts'
+import type { CreateItemPayload } from './contracts'
 import type { Day, Item, SearchResult } from './types'
 
 export type { ClipboardCapturePayload } from './clipboard-capture'
@@ -23,9 +23,6 @@ export interface Api {
   }
   search: {
     query: (q: string) => Promise<SearchResult[]>
-  }
-  metadata: {
-    preview: (url: string) => Promise<MetadataPatch>
   }
   export: {
     day: (dayId: string) => Promise<ExportResult>

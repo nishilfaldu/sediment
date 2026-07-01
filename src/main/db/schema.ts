@@ -1,7 +1,7 @@
+import { ITEM_TYPES, type ItemType, PLATFORMS, type Platform } from '@shared/types'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { ITEM_TYPES, PLATFORMS, type ItemType, type Platform } from '@shared/types'
 
-export { ITEM_TYPES, PLATFORMS, type ItemType, type Platform }
+export { ITEM_TYPES, type ItemType, PLATFORMS, type Platform }
 
 // One row per calendar day that has at least one item.
 // id is an ISO date string: "2026-05-26" (local calendar date, not UTC)

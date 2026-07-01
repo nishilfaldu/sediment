@@ -1,10 +1,9 @@
+import { isLinkArtifact, isNote } from '@shared/item-groups'
 import type { JSX } from 'react'
 import { useMemo } from 'react'
-import { isLinkArtifact, isNote } from '@shared/item-groups'
 import { CanvasItem } from '@/components/board/canvas-item'
 import { useBoardDrop } from '@/hooks/use-board-drop'
 import { useCreateItem, useDeleteItem, useItems, useUpdateItem } from '@/hooks/use-items'
-import { usePasteModal } from '@/stores/paste-modal'
 import { useWorkspaceTab, type WorkspaceTab } from '@/stores/workspace-tab'
 
 export interface DayBoardProps {
@@ -22,7 +21,6 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
   const createItem = useCreateItem()
   const updateItem = useUpdateItem()
   const deleteItem = useDeleteItem(dayId)
-  const openPasteModal = usePasteModal((s) => s.openWith)
   const tab = useWorkspaceTab((s) => s.getTab(dayId))
   const setTab = useWorkspaceTab((s) => s.setTab)
   const { isDraggingOver, dropHandlers } = useBoardDrop(dayId)
@@ -38,11 +36,6 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
   function handleAddNote(): void {
     setTab(dayId, 'notes')
     createItem.mutate({ dayId, type: 'text', content: '' })
-  }
-
-  function handleAddLink(): void {
-    setTab(dayId, 'links')
-    openPasteModal('', { dayId })
   }
 
   if (isLoading) {
@@ -82,15 +75,7 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
           </button>
         </div>
 
-        {tab === 'links' ? (
-          <button
-            type="button"
-            onClick={handleAddLink}
-            className="rounded-lg bg-stone-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-stone-700"
-          >
-            Add link
-          </button>
-        ) : (
+        {tab === 'notes' && (
           <button
             type="button"
             onClick={handleAddNote}
@@ -108,18 +93,14 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
           </p>
           <p className="max-w-sm text-xs text-stone-300">
             {tab === 'links'
-              ? 'Copy a link anywhere — it saves here automatically. Use Add link to preview before saving.'
+              ? 'Copy a link anywhere — it saves here automatically.'
               : 'Capture thoughts for this day — notes stay separate from your saved links.'}
           </p>
         </div>
       ) : tab === 'links' ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 p-6">
           {visibleItems.map((item) => (
-            <CanvasItem
-              key={item.id}
-              item={item}
-              onDelete={() => deleteItem.mutate(item.id)}
-            />
+            <CanvasItem key={item.id} item={item} onDelete={() => deleteItem.mutate(item.id)} />
           ))}
         </div>
       ) : (

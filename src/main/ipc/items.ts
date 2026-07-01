@@ -2,19 +2,14 @@ import { asc, eq } from 'drizzle-orm'
 import { ipcMain } from 'electron'
 import { getDb } from '../db'
 import { items } from '../db/schema'
-import { fetchOgMetadata } from '../services/og-fetcher'
+import { type CreateItemInput, createItemRecord } from '../services/create-item'
 import { needsOgFetch } from '../services/item-metadata'
-import { createItemRecord, type CreateItemInput } from '../services/create-item'
+import { fetchOgMetadata } from '../services/og-fetcher'
 
 export function registerItemsHandlers(): void {
   ipcMain.handle('items:getByDay', (_e, dayId: string) => {
     const db = getDb()
-    return db
-      .select()
-      .from(items)
-      .where(eq(items.dayId, dayId))
-      .orderBy(asc(items.createdAt))
-      .all()
+    return db.select().from(items).where(eq(items.dayId, dayId)).orderBy(asc(items.createdAt)).all()
   })
 
   ipcMain.handle('items:create', (_e, payload: CreateItemInput) => createItemRecord(payload))

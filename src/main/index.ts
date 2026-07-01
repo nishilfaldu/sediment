@@ -3,10 +3,7 @@ import { app, BrowserWindow, shell } from 'electron'
 import { initDb } from './db'
 import { registerAllHandlers } from './ipc'
 import { registerSedimentProtocol, registerSedimentScheme } from './protocol'
-import {
-  registerClipboardWatcher,
-  unregisterClipboardWatcher
-} from './services/clipboard-watcher'
+import { registerClipboardWatcher, unregisterClipboardWatcher } from './services/clipboard-watcher'
 import { createTray, destroyTray } from './services/tray'
 import { loadWindowState, manageWindowState } from './services/window-state'
 

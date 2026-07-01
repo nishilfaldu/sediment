@@ -1,19 +1,14 @@
 import type { JSX } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { TextBlock } from '@/components/blocks/text-block'
+import type { CanvasItemProps } from '@/components/board/canvas-item-types'
 import { ItemCard } from '@/components/cards/item-card'
 import { ContextMenu } from '@/components/ui/context-menu'
 import { useCurrentDay } from '@/stores/current-day'
-import type { CanvasItemProps } from '@/components/board/canvas-item-types'
 
 export type { CanvasItemProps } from '@/components/board/canvas-item-types'
 
-export function CanvasItem({
-  item,
-  onDelete,
-  onUpdate,
-  autoFocus
-}: CanvasItemProps): JSX.Element {
+export function CanvasItem({ item, onDelete, onUpdate, autoFocus }: CanvasItemProps): JSX.Element {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [flash, setFlash] = useState(false)
   const elementRef = useRef<HTMLDivElement>(null)

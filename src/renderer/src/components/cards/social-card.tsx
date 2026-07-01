@@ -1,5 +1,5 @@
-import type { JSX } from 'react'
 import { PLATFORM_COLOURS, PLATFORM_LABELS } from '@shared/labels'
+import type { JSX } from 'react'
 import { CardOpenButton } from '@/components/cards/card-open-button'
 import type { Item } from '@/types'
 

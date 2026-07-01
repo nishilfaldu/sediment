@@ -1,6 +1,6 @@
-import type { Api } from '@shared/ipc'
 import type { ClipboardCapturePayload } from '@shared/clipboard-capture'
 import type { CreateItemPayload } from '@shared/contracts'
+import type { Api } from '@shared/ipc'
 import { contextBridge, ipcRenderer } from 'electron'
 
 const api: Api = {
@@ -17,9 +17,6 @@ const api: Api = {
   },
   search: {
     query: (q: string) => ipcRenderer.invoke('search:query', q)
-  },
-  metadata: {
-    preview: (url: string) => ipcRenderer.invoke('metadata:preview', url)
   },
   export: {
     day: (dayId: string) => ipcRenderer.invoke('export:day', dayId),

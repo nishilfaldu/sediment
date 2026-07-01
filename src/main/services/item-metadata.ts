@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm'
 import type { MetadataPatch } from '@shared/contracts'
 import type { ItemType } from '@shared/types'
+import { eq } from 'drizzle-orm'
 import { getDb } from '../db'
 import { items } from '../db/schema'
 

@@ -1,6 +1,6 @@
+import type { MetadataPatch } from '@shared/contracts'
 import { load } from 'cheerio'
 import { BrowserWindow } from 'electron'
-import type { MetadataPatch } from '@shared/contracts'
 import { patchItemMetadata } from './item-metadata'
 
 function getMeta($: ReturnType<typeof load>, ...props: string[]): string | null {

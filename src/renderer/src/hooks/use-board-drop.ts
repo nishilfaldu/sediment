@@ -1,7 +1,6 @@
-import { useRef, useState } from 'react'
 import { detectUrl } from '@shared/detect-url'
+import { useRef, useState } from 'react'
 import { useCreateItem } from '@/hooks/use-items'
-import { usePasteModal } from '@/stores/paste-modal'
 import { useWorkspaceTab } from '@/stores/workspace-tab'
 
 export interface BoardDropHandlers {
@@ -35,7 +34,6 @@ function firstUri(uriList: string): string | null {
 
 export function useBoardDrop(dayId: string): UseBoardDrop {
   const createItem = useCreateItem()
-  const openPasteModal = usePasteModal((s) => s.openWith)
   const setTab = useWorkspaceTab((s) => s.setTab)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const dragDepth = useRef(0)
@@ -88,7 +86,13 @@ export function useBoardDrop(dayId: string): UseBoardDrop {
     const detected = detectUrl(raw)
     if (detected) {
       setTab(dayId, 'links')
-      openPasteModal(detected.sourceUrl, { dayId })
+      createItem.mutate({
+        dayId,
+        type: detected.type,
+        sourceUrl: detected.sourceUrl,
+        platform: detected.platform ?? null,
+        content: null
+      })
       return
     }
 
