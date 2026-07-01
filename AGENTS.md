@@ -2,7 +2,7 @@
 
 ⚠️ **IMPORTANT FOR AI AGENTS:** This file (`CLAUDE.md`) and `AGENTS.md` are clones — keep them in sync on substantial changes (architecture, data flow, IPC patterns, new major features). Skip minor UI/copy edits. When one is updated, mirror immediately.
 
-**Code conventions, patterns, and agent behaviour rules** are in [`.notes/learnings.md`](.notes/learnings.md) — read it before writing code. Add a new entry any time something turns out meaningfully better than the naive approach.
+**Project-specific traps** (not history, not style) are in [`.notes/learnings.md`](.notes/learnings.md) — skim before touching IPC, DB, or Electron.
 
 ---
 
@@ -75,9 +75,10 @@ bunx drizzle-kit generate  # generate SQL migrations after schema changes
 
 ---
 
-## Issues & Implementation Roadmap
+## History & planning
 
-See [`.issues/`](.issues/) for per-phase task files.
+- **What was done:** merged PRs on GitHub (`gh pr list --state merged`). PR bodies are the changelog — no local task files.
+- **Future work / bugs:** GitHub Issues, only when something needs tracking outside a PR.
 
 ---
 
