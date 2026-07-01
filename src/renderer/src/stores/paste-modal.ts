@@ -2,8 +2,6 @@ import { create } from 'zustand'
 
 export interface PasteModalTarget {
   dayId: string
-  // When set, confirming upgrades this item instead of creating a new one.
-  upgradeItemId?: string
 }
 
 export interface PasteModalStore {

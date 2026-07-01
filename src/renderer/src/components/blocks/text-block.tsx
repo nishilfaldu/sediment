@@ -1,13 +1,9 @@
 import type { JSX } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { detectUrl } from '@shared/detect-url'
-import { usePasteModal } from '@/stores/paste-modal'
 import type { Item } from '@/types'
 
 export interface TextBlockProps {
   item: Item
-  dayId: string
-  itemId: string
   onSave: (content: string) => void
   onEmpty: () => void
   autoFocus?: boolean
@@ -15,8 +11,6 @@ export interface TextBlockProps {
 
 export function TextBlock({
   item,
-  dayId,
-  itemId,
   onSave,
   onEmpty,
   autoFocus = false
@@ -24,8 +18,6 @@ export function TextBlock({
   const [editing, setEditing] = useState(autoFocus)
   const [draft, setDraft] = useState(item.content ?? '')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const upgradingRef = useRef(false)
-  const openPasteModal = usePasteModal((s) => s.openWith)
 
   function resize(): void {
     const el = textareaRef.current
@@ -43,23 +35,8 @@ export function TextBlock({
     }
   }, [editing])
 
-  function openLinkModal(url: string): void {
-    upgradingRef.current = true
-    setEditing(false)
-    openPasteModal(url, { dayId, upgradeItemId: itemId })
-  }
-
   function commit(): void {
-    if (upgradingRef.current) {
-      upgradingRef.current = false
-      return
-    }
     const trimmed = draft.trim()
-    const detected = detectUrl(trimmed)
-    if (detected) {
-      openLinkModal(detected.sourceUrl)
-      return
-    }
     if (!trimmed) {
       onEmpty()
       setEditing(false)
@@ -69,15 +46,6 @@ export function TextBlock({
       onSave(trimmed)
     }
     setEditing(false)
-  }
-
-  function handlePaste(e: React.ClipboardEvent): void {
-    const pasted = e.clipboardData.getData('text').trim()
-    const detected = detectUrl(pasted)
-    if (detected && !draft.trim()) {
-      e.preventDefault()
-      openLinkModal(detected.sourceUrl)
-    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent): void {
@@ -97,13 +65,12 @@ export function TextBlock({
         ref={textareaRef}
         className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-stone-800 placeholder-stone-300 outline-none"
         value={draft}
-        placeholder="Write something…"
+        placeholder="Write your thoughts…"
         onChange={(e) => {
           setDraft(e.target.value)
           resize()
         }}
         onBlur={commit}
-        onPaste={handlePaste}
         onKeyDown={handleKeyDown}
         rows={1}
       />
@@ -118,7 +85,7 @@ export function TextBlock({
       {item.content ? (
         <p className="whitespace-pre-wrap">{item.content}</p>
       ) : (
-        <p className="text-stone-300">Empty</p>
+        <p className="text-stone-300">Empty note</p>
       )}
     </div>
   )

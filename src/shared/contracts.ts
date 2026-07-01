@@ -11,8 +11,6 @@ export interface CreateItemPayload {
   description?: string | null
   thumbnail?: string | null
   metadata?: string | null
-  x?: number
-  y?: number
 }
 
 export interface MetadataPatch {

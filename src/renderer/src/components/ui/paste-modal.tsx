@@ -3,9 +3,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { detectUrl } from '@shared/detect-url'
 import { LinkPreview } from '@/components/ui/link-preview'
 import { useMetadataPreview } from '@/hooks/use-metadata-preview'
-import { useCreateItem, useUpdateItem } from '@/hooks/use-items'
+import { useCreateItem } from '@/hooks/use-items'
 import { usePasteModal } from '@/stores/paste-modal'
 import { useToast } from '@/stores/toast'
+import { useWorkspaceTab } from '@/stores/workspace-tab'
 
 function useDebounced(value: string, ms: number): string {
   const [debounced, setDebounced] = useState(value)
@@ -22,10 +23,10 @@ export function PasteModal(): JSX.Element | null {
   const target = usePasteModal((s) => s.target)
   const setUrl = usePasteModal((s) => s.setUrl)
   const close = usePasteModal((s) => s.close)
+  const setTab = useWorkspaceTab((s) => s.setTab)
   const { show: showToast } = useToast()
 
   const createItem = useCreateItem()
-  const updateItem = useUpdateItem()
   const debouncedUrl = useDebounced(url.trim(), 300)
   const detected = useMemo(
     () => (debouncedUrl ? detectUrl(debouncedUrl) : null),
@@ -35,7 +36,7 @@ export function PasteModal(): JSX.Element | null {
     detected?.sourceUrl ?? null
   )
 
-  const saving = createItem.isPending || updateItem.isPending
+  const saving = createItem.isPending
   const canSave = Boolean(detected && target && !saving)
 
   if (!open) return null
@@ -47,34 +48,21 @@ export function PasteModal(): JSX.Element | null {
   function save(): void {
     if (!detected || !target) return
 
-    const patch = {
-      type: detected.type,
-      sourceUrl: detected.sourceUrl,
-      platform: detected.platform ?? null,
-      content: null,
-      title: metadata?.title ?? null,
-      description: metadata?.description ?? null,
-      thumbnail: metadata?.thumbnail ?? null,
-      metadata: metadata?.metadata ?? null
-    }
-
-    if (target.upgradeItemId) {
-      updateItem.mutate(
-        { id: target.upgradeItemId, patch },
-        {
-          onSuccess: () => {
-            showToast('Link saved')
-            dismiss()
-          }
-        }
-      )
-      return
-    }
-
     createItem.mutate(
-      { dayId: target.dayId, ...patch },
+      {
+        dayId: target.dayId,
+        type: detected.type,
+        sourceUrl: detected.sourceUrl,
+        platform: detected.platform ?? null,
+        content: null,
+        title: metadata?.title ?? null,
+        description: metadata?.description ?? null,
+        thumbnail: metadata?.thumbnail ?? null,
+        metadata: metadata?.metadata ?? null
+      },
       {
         onSuccess: () => {
+          setTab(target.dayId, 'links')
           showToast('Link saved')
           dismiss()
         }
@@ -105,7 +93,7 @@ export function PasteModal(): JSX.Element | null {
         <div className="border-b border-stone-100 px-4 py-3">
           <h2 className="text-sm font-medium text-stone-800">Add link</h2>
           <p className="mt-0.5 text-xs text-stone-400">
-            Paste a URL to preview it before saving to your board.
+            Paste a URL to preview it before saving to your links.
           </p>
         </div>
 

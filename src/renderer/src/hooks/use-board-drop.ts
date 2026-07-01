@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { detectUrl } from '@shared/detect-url'
 import { useCreateItem } from '@/hooks/use-items'
 import { usePasteModal } from '@/stores/paste-modal'
+import { useWorkspaceTab } from '@/stores/workspace-tab'
 
 export interface BoardDropHandlers {
   onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void
@@ -35,6 +36,7 @@ function firstUri(uriList: string): string | null {
 export function useBoardDrop(dayId: string): UseBoardDrop {
   const createItem = useCreateItem()
   const openPasteModal = usePasteModal((s) => s.openWith)
+  const setTab = useWorkspaceTab((s) => s.setTab)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const dragDepth = useRef(0)
 
@@ -67,6 +69,7 @@ export function useBoardDrop(dayId: string): UseBoardDrop {
     const plainText = e.dataTransfer.getData('text/plain')
 
     if (imageFiles.length > 0) {
+      setTab(dayId, 'links')
       const dataUrls = await Promise.all(imageFiles.map((f) => readAsDataUrl(f).catch(() => null)))
       dataUrls.forEach((dataUrl) => {
         if (!dataUrl) return
@@ -84,10 +87,12 @@ export function useBoardDrop(dayId: string): UseBoardDrop {
 
     const detected = detectUrl(raw)
     if (detected) {
+      setTab(dayId, 'links')
       openPasteModal(detected.sourceUrl, { dayId })
       return
     }
 
+    setTab(dayId, 'notes')
     createItem.mutate({ dayId, type: 'text', content: raw })
   }
 

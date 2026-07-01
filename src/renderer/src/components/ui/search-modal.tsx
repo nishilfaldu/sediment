@@ -1,10 +1,12 @@
 import type { JSX } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { TYPE_LABELS } from '@shared/labels'
+import { isLinkArtifact } from '@shared/item-groups'
 import { useSearch } from '@/hooks/use-search'
 import { formatDaySidebar } from '@/lib/dates'
 import { useCurrentDay } from '@/stores/current-day'
 import { useSearch as useSearchStore } from '@/stores/search'
+import { useWorkspaceTab } from '@/stores/workspace-tab'
 import type { SearchResult } from '@/types'
 
 // Debounce the query so we don't hit IPC on every keystroke.
@@ -47,6 +49,7 @@ export function SearchModal(): JSX.Element | null {
   const open = useSearchStore((s) => s.open)
   const setOpen = useSearchStore((s) => s.setOpen)
   const goToItem = useCurrentDay((s) => s.goToItem)
+  const setTab = useWorkspaceTab((s) => s.setTab)
 
   const [query, setQuery] = useState('')
   const debounced = useDebounced(query, 180)
@@ -86,6 +89,7 @@ export function SearchModal(): JSX.Element | null {
   }
 
   function activate(r: SearchResult): void {
+    setTab(r.dayId, isLinkArtifact(r.type) ? 'links' : 'notes')
     goToItem(r.dayId, r.id)
     close()
   }

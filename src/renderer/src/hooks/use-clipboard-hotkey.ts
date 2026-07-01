@@ -5,6 +5,7 @@ import { useCreateItem } from '@/hooks/use-items'
 import { todayId } from '@/lib/dates'
 import { useCurrentDay } from '@/stores/current-day'
 import { useToast } from '@/stores/toast'
+import { useWorkspaceTab } from '@/stores/workspace-tab'
 
 export { TYPE_LABELS }
 
@@ -17,11 +18,13 @@ export function useClipboardHotkey(): void {
   const { setDayId } = useCurrentDay()
   const { show: showToast } = useToast()
   const openPasteModal = usePasteModal((s) => s.openWith)
+  const setTab = useWorkspaceTab((s) => s.setTab)
 
   const mutateRef = useRef(mutate)
   const setDayIdRef = useRef(setDayId)
   const showToastRef = useRef(showToast)
   const openPasteModalRef = useRef(openPasteModal)
+  const setTabRef = useRef(setTab)
 
   useEffect(() => {
     mutateRef.current = mutate
@@ -35,6 +38,9 @@ export function useClipboardHotkey(): void {
   useEffect(() => {
     openPasteModalRef.current = openPasteModal
   }, [openPasteModal])
+  useEffect(() => {
+    setTabRef.current = setTab
+  }, [setTab])
 
   useEffect(() => {
     const unsub = window.api.on.shortcutTriggered((payload) => {
@@ -42,8 +48,15 @@ export function useClipboardHotkey(): void {
       setDayIdRef.current(dayId)
 
       if (isUrlType(payload.type) && payload.sourceUrl) {
+        setTabRef.current(dayId, 'links')
         openPasteModalRef.current(payload.sourceUrl, { dayId })
         return
+      }
+
+      if (payload.type === 'image') {
+        setTabRef.current(dayId, 'links')
+      } else if (payload.type === 'text') {
+        setTabRef.current(dayId, 'notes')
       }
 
       mutateRef.current(

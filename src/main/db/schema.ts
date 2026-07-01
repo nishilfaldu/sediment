@@ -1,7 +1,7 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { ITEM_TYPES, PLATFORMS, WIDTH_HINTS, type ItemType, type Platform, type WidthHint } from '@shared/types'
+import { ITEM_TYPES, PLATFORMS, type ItemType, type Platform } from '@shared/types'
 
-export { ITEM_TYPES, PLATFORMS, WIDTH_HINTS, type ItemType, type Platform, type WidthHint }
+export { ITEM_TYPES, PLATFORMS, type ItemType, type Platform }
 
 // One row per calendar day that has at least one item.
 // id is an ISO date string: "2026-05-26" (local calendar date, not UTC)
@@ -26,12 +26,6 @@ export const items = sqliteTable('items', {
   imagePath: text('image_path'),
   platform: text('platform').$type<Platform | null>(),
   metadata: text('metadata'),
-  x: integer('x').notNull().default(40),
-  y: integer('y').notNull().default(40),
-  // Stacking order rendered as z-index on the freeform canvas.
-  position: integer('position').notNull().default(0),
-  // Reserved for future layout hints — not used by the freeform canvas yet.
-  widthHint: text('width_hint').$type<WidthHint>().notNull().default('medium'),
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull()
 })

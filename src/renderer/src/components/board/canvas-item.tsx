@@ -60,9 +60,7 @@ export function CanvasItem({
           <div className="rounded-xl border border-stone-100 bg-white p-4 shadow-sm">
             <TextBlock
               item={item}
-              dayId={item.dayId}
-              itemId={item.id}
-              onSave={onUpdate}
+              onSave={onUpdate ?? (() => undefined)}
               onEmpty={onDelete}
               autoFocus={autoFocus}
             />

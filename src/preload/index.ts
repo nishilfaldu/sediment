@@ -9,10 +9,7 @@ const api: Api = {
     create: (payload: CreateItemPayload) => ipcRenderer.invoke('items:create', payload),
     update: (id: string, patch: Partial<CreateItemPayload>) =>
       ipcRenderer.invoke('items:update', id, patch),
-    delete: (id: string) => ipcRenderer.invoke('items:delete', id),
-    move: (id: string, x: number, y: number) => ipcRenderer.invoke('items:move', id, x, y),
-    bringToFront: (id: string, dayId: string) =>
-      ipcRenderer.invoke('items:bringToFront', id, dayId)
+    delete: (id: string) => ipcRenderer.invoke('items:delete', id)
   },
   days: {
     list: () => ipcRenderer.invoke('days:list'),

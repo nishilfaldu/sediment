@@ -1,4 +1,4 @@
-import { asc, desc, eq } from 'drizzle-orm'
+import { asc, eq } from 'drizzle-orm'
 import { ipcMain } from 'electron'
 import { nanoid } from 'nanoid'
 import { ensureDay } from '../db/ensure-day'
@@ -17,7 +17,7 @@ export function registerItemsHandlers(): void {
       .select()
       .from(items)
       .where(eq(items.dayId, dayId))
-      .orderBy(asc(items.position), asc(items.createdAt))
+      .orderBy(asc(items.createdAt))
       .all()
   })
 
@@ -28,15 +28,6 @@ export function registerItemsHandlers(): void {
     const db = getDb()
     const now = Date.now()
     const id = nanoid()
-
-    const existing = db
-      .select({ position: items.position })
-      .from(items)
-      .where(eq(items.dayId, payload.dayId))
-      .orderBy(asc(items.position))
-      .all()
-
-    const nextPosition = existing.length > 0 ? existing[existing.length - 1].position + 1 : 0
 
     let content = payload.content ?? null
     let imagePath: string | null = null
@@ -57,7 +48,6 @@ export function registerItemsHandlers(): void {
         id,
         content,
         imagePath,
-        position: nextPosition,
         createdAt: now,
         updatedAt: now
       })
@@ -91,33 +81,5 @@ export function registerItemsHandlers(): void {
   ipcMain.handle('items:delete', (_e, id: string) => {
     const db = getDb()
     db.delete(items).where(eq(items.id, id)).run()
-  })
-
-  ipcMain.handle('items:move', (_e, id: string, x: number, y: number) => {
-    const db = getDb()
-    return db
-      .update(items)
-      .set({ x, y, updatedAt: Date.now() })
-      .where(eq(items.id, id))
-      .returning()
-      .get()
-  })
-
-  ipcMain.handle('items:bringToFront', (_e, id: string, dayId: string) => {
-    const db = getDb()
-    const top = db
-      .select({ position: items.position })
-      .from(items)
-      .where(eq(items.dayId, dayId))
-      .orderBy(desc(items.position))
-      .limit(1)
-      .get()
-    const next = (top?.position ?? 0) + 1
-    return db
-      .update(items)
-      .set({ position: next, updatedAt: Date.now() })
-      .where(eq(items.id, id))
-      .returning()
-      .get()
   })
 }

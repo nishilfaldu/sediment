@@ -47,7 +47,7 @@ function renderMarkdown(dayId: string, rows: Item[], forPrompt: boolean): string
 }
 
 function getDayMarkdown(dayId: string, forPrompt: boolean): string {
-  // Order by creation time (position is visual stacking order, not list order).
+  // Order by creation time.
   const rows = getDb()
     .select()
     .from(items)
