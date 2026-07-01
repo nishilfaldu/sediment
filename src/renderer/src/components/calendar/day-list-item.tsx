@@ -13,8 +13,10 @@ export function DayListItem({ day, isActive, onClick }: DayListItemProps): JSX.E
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded px-3 py-1.5 text-left text-sm transition-colors ${
-        isActive ? 'font-medium text-stone-900' : 'text-stone-400 hover:text-stone-700'
+      className={`w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
+        isActive
+          ? 'bg-stone-100 font-medium text-stone-900'
+          : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'
       }`}
     >
       {formatDaySidebar(day.id)}

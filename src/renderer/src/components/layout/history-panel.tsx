@@ -16,8 +16,8 @@ export function HistoryPanel(): JSX.Element {
       }`}
     >
       <div className="flex min-w-[12rem] flex-col h-full">
-        <div className="flex shrink-0 items-center justify-between px-4 pt-5 pb-3">
-          <span className="text-[11px] font-semibold tracking-widest text-stone-300 uppercase">
+        <div className="flex shrink-0 items-center justify-between px-3 pt-4 pb-2">
+          <span className="text-[11px] font-semibold tracking-widest text-stone-400 uppercase">
             History
           </span>
           <button

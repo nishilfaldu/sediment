@@ -8,11 +8,8 @@ export interface ImageCardProps {
 
 export function ImageCard({ item }: ImageCardProps): JSX.Element {
   const [lightboxOpen, setLightboxOpen] = useState(false)
-  // imagePath holds the sediment:// URL written by image-store.ts
   const src = item.imagePath ?? item.content ?? ''
 
-  // Listen for Escape on the document rather than adding tabIndex to the overlay
-  // div — that avoids placing focus management on a non-interactive element.
   useEffect(() => {
     if (!lightboxOpen) return
     const handler = (e: KeyboardEvent): void => {
@@ -24,29 +21,27 @@ export function ImageCard({ item }: ImageCardProps): JSX.Element {
 
   return (
     <>
-      <div className="-mx-4 -my-4 overflow-hidden rounded-xl">
-        <button
-          type="button"
-          onClick={() => setLightboxOpen(true)}
-          className="block w-full"
-          aria-label="View full image"
-        >
-          <img src={src} alt="" className="w-full object-cover" loading="lazy" />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setLightboxOpen(true)}
+        className="block w-full"
+        aria-label="View full image"
+      >
+        <img src={src} alt="" className="max-h-64 w-full object-cover" loading="lazy" />
+      </button>
 
-      {/* Lightbox — fixed overlay, click backdrop or Escape to close */}
       {lightboxOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-stone-900/80 p-8"
           onClick={() => setLightboxOpen(false)}
           role="dialog"
           aria-modal="true"
+          aria-label="Image preview"
         >
           <img
             src={src}
             alt=""
-            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
+            className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { TextBlock } from '@/components/blocks/text-block'
 import type { CanvasItemProps } from '@/components/board/canvas-item-types'
 import { ItemCard } from '@/components/cards/item-card'
+import { CloseIcon } from '@/components/icons/close-icon'
 import { ContextMenu } from '@/components/ui/context-menu'
 import { useCurrentDay } from '@/stores/current-day'
 
@@ -39,20 +40,29 @@ export function CanvasItem({ item, onDelete, onUpdate, autoFocus }: CanvasItemPr
     })
   }
 
+  const shellClass = flash
+    ? 'rounded-xl ring-2 ring-sky-400 ring-offset-2 ring-offset-stone-50 transition-shadow'
+    : 'min-w-0'
+
   return (
     <>
       <div
         ref={elementRef}
         data-item-id={item.id}
-        className={
-          flash
-            ? 'rounded-xl ring-2 ring-sky-400 ring-offset-2 ring-offset-white transition-shadow'
-            : 'min-w-0'
-        }
+        className={`group relative ${shellClass}`}
         onContextMenu={handleContextMenu}
       >
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label="Delete"
+          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-stone-400 opacity-0 shadow-sm ring-1 ring-stone-200 transition-opacity hover:text-stone-700 group-hover:opacity-100"
+        >
+          <CloseIcon />
+        </button>
+
         {item.type === 'text' ? (
-          <div className="rounded-xl border border-stone-100 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-sm">
             <TextBlock
               item={item}
               onSave={onUpdate ?? (() => undefined)}
@@ -61,7 +71,7 @@ export function CanvasItem({ item, onDelete, onUpdate, autoFocus }: CanvasItemPr
             />
           </div>
         ) : (
-          <div className="rounded-xl border border-stone-100 bg-white p-4 shadow-sm overflow-hidden">
+          <div className="overflow-hidden rounded-xl border border-stone-200/80 bg-white shadow-sm transition-shadow hover:shadow-md">
             <ItemCard item={item} />
           </div>
         )}

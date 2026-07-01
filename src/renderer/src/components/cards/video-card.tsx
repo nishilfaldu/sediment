@@ -32,38 +32,36 @@ export function VideoCard({ item }: VideoCardProps): JSX.Element {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col">
       {thumbnail && (
         <button
           type="button"
           onClick={open}
-          className="-mx-4 -mt-5 mb-1 block overflow-hidden rounded-t-xl relative group/thumb"
+          className="relative block w-full"
           aria-label={`Play on ${label}`}
         >
-          <img
-            src={thumbnail}
-            alt=""
-            className="w-full object-cover"
-            style={{ maxHeight: '180px' }}
-            loading="lazy"
-          />
-          <div className="absolute inset-0 flex items-center justify-center opacity-80 group-hover/thumb:opacity-100 transition-opacity">
+          <img src={thumbnail} alt="" className="h-40 w-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 flex items-center justify-center bg-stone-900/10 opacity-80 transition-opacity hover:opacity-100">
             <PlayIcon />
           </div>
         </button>
       )}
 
-      {item.title ? (
-        <p className="text-sm font-medium leading-snug text-stone-800 line-clamp-2">{item.title}</p>
-      ) : (
-        <p className="text-sm text-stone-400 break-all line-clamp-1">{url}</p>
-      )}
+      <div className="flex flex-col gap-2 p-4">
+        {item.title ? (
+          <p className="text-sm font-medium leading-snug text-stone-800 line-clamp-2">
+            {item.title}
+          </p>
+        ) : (
+          <p className="text-sm text-stone-400 break-all line-clamp-1">{url}</p>
+        )}
 
-      <div className="flex items-center justify-between pt-1">
-        <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-500">
-          {label}
-        </span>
-        <CardOpenButton url={url} />
+        <div className="flex items-center justify-between pt-1">
+          <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-500">
+            {label}
+          </span>
+          <CardOpenButton url={url} />
+        </div>
       </div>
     </div>
   )
