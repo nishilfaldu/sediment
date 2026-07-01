@@ -1,6 +1,6 @@
 import type { Api } from '@shared/ipc'
+import type { ClipboardCapturePayload } from '@shared/clipboard-capture'
 import type { CreateItemPayload } from '@shared/contracts'
-import type { ShortcutPayload } from '@shared/shortcut'
 import { contextBridge, ipcRenderer } from 'electron'
 
 const api: Api = {
@@ -27,11 +27,15 @@ const api: Api = {
     openInAi: (dayId: string, provider: 'chatgpt' | 'claude') =>
       ipcRenderer.invoke('export:openInAi', dayId, provider)
   },
+  clipboard: {
+    suppress: (url: string) => ipcRenderer.invoke('clipboard:suppress', url)
+  },
   on: {
-    shortcutTriggered: (cb: (payload: ShortcutPayload) => void) => {
-      const handler = (_e: Electron.IpcRendererEvent, payload: ShortcutPayload) => cb(payload)
-      ipcRenderer.on('shortcut:triggered', handler)
-      return () => ipcRenderer.removeListener('shortcut:triggered', handler)
+    clipboardCaptured: (cb: (payload: ClipboardCapturePayload) => void) => {
+      const handler = (_e: Electron.IpcRendererEvent, payload: ClipboardCapturePayload) =>
+        cb(payload)
+      ipcRenderer.on('clipboard:captured', handler)
+      return () => ipcRenderer.removeListener('clipboard:captured', handler)
     },
     itemMetadataUpdated: (cb: (payload: { id: string; dayId: string }) => void) => {
       const handler = (_e: Electron.IpcRendererEvent, payload: { id: string; dayId: string }) =>

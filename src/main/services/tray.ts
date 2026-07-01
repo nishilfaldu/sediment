@@ -15,7 +15,7 @@ export function createTray(getWindow: () => BrowserWindow | null): void {
   image.setTemplateImage(true)
 
   tray = new Tray(image)
-  tray.setToolTip('Sediment')
+  tray.setToolTip('Sediment — copied links save automatically')
 
   function showWindow(): void {
     const w = getWindow()

@@ -3,7 +3,10 @@ import { app, BrowserWindow, shell } from 'electron'
 import { initDb } from './db'
 import { registerAllHandlers } from './ipc'
 import { registerSedimentProtocol, registerSedimentScheme } from './protocol'
-import { registerGlobalShortcut, unregisterGlobalShortcut } from './services/global-shortcut'
+import {
+  registerClipboardWatcher,
+  unregisterClipboardWatcher
+} from './services/clipboard-watcher'
 import { createTray, destroyTray } from './services/tray'
 import { loadWindowState, manageWindowState } from './services/window-state'
 
@@ -58,8 +61,7 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  // Register Cmd+Shift+S after the window is created so we can reference it
-  registerGlobalShortcut(win)
+  registerClipboardWatcher(() => mainWindow)
 
   // In dev, electron-vite sets ELECTRON_RENDERER_URL to the Vite dev server.
   // In production, load the built HTML file directly.
@@ -125,8 +127,7 @@ app.on('window-all-closed', () => {
   }
 })
 
-// Clean up the OS-level shortcut registration before the process exits
 app.on('will-quit', () => {
-  unregisterGlobalShortcut()
+  unregisterClipboardWatcher()
   destroyTray()
 })

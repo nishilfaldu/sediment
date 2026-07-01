@@ -1,14 +1,10 @@
 import { asc, eq } from 'drizzle-orm'
 import { ipcMain } from 'electron'
-import { nanoid } from 'nanoid'
-import { ensureDay } from '../db/ensure-day'
 import { getDb } from '../db'
-import { items, type NewItem } from '../db/schema'
-import { saveImageDataUrl } from '../services/image-store'
+import { items } from '../db/schema'
 import { fetchOgMetadata } from '../services/og-fetcher'
 import { needsOgFetch } from '../services/item-metadata'
-
-type CreateItemInput = Omit<NewItem, 'id' | 'createdAt' | 'updatedAt'>
+import { createItemRecord, type CreateItemInput } from '../services/create-item'
 
 export function registerItemsHandlers(): void {
   ipcMain.handle('items:getByDay', (_e, dayId: string) => {
@@ -21,45 +17,7 @@ export function registerItemsHandlers(): void {
       .all()
   })
 
-  // Insert a new item. Ensures the day row exists (FK) in the same flow.
-  ipcMain.handle('items:create', (_e, payload: CreateItemInput) => {
-    ensureDay(payload.dayId)
-
-    const db = getDb()
-    const now = Date.now()
-    const id = nanoid()
-
-    let content = payload.content ?? null
-    let imagePath: string | null = null
-
-    if (payload.type === 'image' && typeof content === 'string' && content.startsWith('data:')) {
-      try {
-        imagePath = saveImageDataUrl(id, content)
-        content = null
-      } catch {
-        // If the save fails keep the data URL in content as a fallback
-      }
-    }
-
-    const item = db
-      .insert(items)
-      .values({
-        ...payload,
-        id,
-        content,
-        imagePath,
-        createdAt: now,
-        updatedAt: now
-      })
-      .returning()
-      .get()
-
-    if (needsOgFetch(item) && !item.title) {
-      fetchOgMetadata(item.id, item.dayId, item.sourceUrl as string)
-    }
-
-    return item
-  })
+  ipcMain.handle('items:create', (_e, payload: CreateItemInput) => createItemRecord(payload))
 
   ipcMain.handle('items:update', (_e, id: string, patch: Partial<CreateItemInput>) => {
     const db = getDb()

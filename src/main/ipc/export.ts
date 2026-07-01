@@ -3,6 +3,7 @@ import { asc, eq } from 'drizzle-orm'
 import { BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron'
 import { getDb } from '../db'
 import { type Item, items } from '../db/schema'
+import { ignoreNextClipboardWrites } from '../services/clipboard-watcher'
 import { imageUrlToDiskPath } from '../services/image-store'
 
 export interface ExportResult {
@@ -89,6 +90,7 @@ export function registerExportHandlers(): void {
 
   // Copy the day's Markdown to the clipboard for pasting into an AI model.
   ipcMain.handle('export:copyMarkdown', (_e, dayId: string): void => {
+    ignoreNextClipboardWrites()
     clipboard.writeText(getDayMarkdown(dayId, true))
   })
 

@@ -108,7 +108,7 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
           </p>
           <p className="max-w-sm text-xs text-stone-300">
             {tab === 'links'
-              ? 'Add links with preview, or use ⌘⇧S when your clipboard has a URL or image.'
+              ? 'Copy a link anywhere — it saves here automatically. Use Add link to preview before saving.'
               : 'Capture thoughts for this day — notes stay separate from your saved links.'}
           </p>
         </div>

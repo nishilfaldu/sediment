@@ -2,22 +2,28 @@ import type { JSX } from 'react'
 import { useToast } from '@/stores/toast'
 
 export function Toast(): JSX.Element {
-  const { message, visible } = useToast()
+  const { message, visible, action, dismiss } = useToast()
 
   return (
-    /*
-     * Fixed to the bottom-centre of the viewport, above the bottom bar.
-     * Slides up 4px and fades in when visible; slides down and fades out
-     * when dismissed. pointer-events-none when hidden so it doesn't intercept
-     * clicks on the canvas below.
-     */
     <div
       className={`fixed bottom-12 left-1/2 z-50 -translate-x-1/2 transition-all duration-300 ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1 pointer-events-none'
       }`}
     >
-      <div className="rounded-full bg-stone-900 px-4 py-1.5 text-sm text-white shadow-lg">
-        {message}
+      <div className="flex items-center gap-3 rounded-full bg-stone-900 px-4 py-1.5 text-sm text-white shadow-lg">
+        <span>{message}</span>
+        {action && (
+          <button
+            type="button"
+            onClick={() => {
+              action.onClick()
+              dismiss()
+            }}
+            className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium hover:bg-white/25"
+          >
+            {action.label}
+          </button>
+        )}
       </div>
     </div>
   )
