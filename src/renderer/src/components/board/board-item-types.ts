@@ -1,6 +1,6 @@
 import type { Item } from '@/types'
 
-export interface CanvasItemProps {
+export interface BoardItemProps {
   item: Item
   onDelete: () => void
   onUpdate?: (content: string) => void

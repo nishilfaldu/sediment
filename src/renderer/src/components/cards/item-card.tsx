@@ -4,7 +4,7 @@ import { LinkCard } from '@/components/cards/link-card'
 import { SocialCard } from '@/components/cards/social-card'
 import { VideoCard } from '@/components/cards/video-card'
 import { CardSkeleton } from '@/components/cards/card-skeleton'
-import { isMetadataLoading } from '@/lib/item-meta'
+import { isAwaitingOgMetadata } from '@shared/item-metadata'
 import type { Item } from '@/types'
 
 export interface ItemCardProps {
@@ -12,7 +12,7 @@ export interface ItemCardProps {
 }
 
 export function ItemCard({ item }: ItemCardProps): JSX.Element {
-  if (isMetadataLoading(item)) {
+  if (isAwaitingOgMetadata(item)) {
     return <CardSkeleton />
   }
 

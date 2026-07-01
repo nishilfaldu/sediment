@@ -2,8 +2,6 @@ import type { JSX } from 'react'
 import type { DaySummary } from '@shared/day-summary'
 import { formatDaySidebar } from '@/lib/dates'
 
-export type { DaySummary }
-
 export interface DayListItemProps {
   day: DaySummary
   isActive: boolean

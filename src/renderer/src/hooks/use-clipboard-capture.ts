@@ -1,7 +1,7 @@
 import type { ClipboardCapturePayload } from '@shared/clipboard-capture'
 import { TYPE_LABELS } from '@shared/labels'
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useCurrentDay } from '@/stores/current-day'
 import { useRecentItems } from '@/stores/recent-items'
 import { useToast } from '@/stores/toast'
@@ -11,52 +11,29 @@ function captureLabel(payload: ClipboardCapturePayload): string {
   return TYPE_LABELS[payload.type] ?? 'link'
 }
 
+function invalidateDay(qc: ReturnType<typeof useQueryClient>, dayId: string): void {
+  qc.invalidateQueries({ queryKey: ['items', dayId] })
+  qc.invalidateQueries({ queryKey: ['days'] })
+}
+
 export function useClipboardCapture(): void {
   const qc = useQueryClient()
-  const { setDayId } = useCurrentDay()
-  const { show: showToast } = useToast()
-  const setTab = useWorkspaceTab((s) => s.setTab)
-  const markRecent = useRecentItems((s) => s.markRecent)
-
-  const setDayIdRef = useRef(setDayId)
-  const showToastRef = useRef(showToast)
-  const setTabRef = useRef(setTab)
-  const qcRef = useRef(qc)
-  const markRecentRef = useRef(markRecent)
-
-  useEffect(() => {
-    setDayIdRef.current = setDayId
-  }, [setDayId])
-  useEffect(() => {
-    showToastRef.current = showToast
-  }, [showToast])
-  useEffect(() => {
-    setTabRef.current = setTab
-  }, [setTab])
-  useEffect(() => {
-    qcRef.current = qc
-  }, [qc])
-  useEffect(() => {
-    markRecentRef.current = markRecent
-  }, [markRecent])
 
   useEffect(() => {
     const unsubCapture = window.api.on.clipboardCaptured((payload) => {
-      setDayIdRef.current(payload.dayId)
-      setTabRef.current(payload.dayId, 'links')
-      markRecentRef.current(payload.id)
-      qcRef.current.invalidateQueries({ queryKey: ['items', payload.dayId] })
-      qcRef.current.invalidateQueries({ queryKey: ['days'] })
+      useCurrentDay.getState().setDayId(payload.dayId)
+      useWorkspaceTab.getState().setTab(payload.dayId, 'links')
+      useRecentItems.getState().markRecent(payload.id)
+      invalidateDay(qc, payload.dayId)
 
-      showToastRef.current(`Saved ${captureLabel(payload)}`, {
+      useToast.getState().show(`Saved ${captureLabel(payload)}`, {
         durationMs: 8000,
         action: {
           label: 'Undo',
           onClick: () => {
             void window.api.items.delete(payload.id).then(() => {
               void window.api.clipboard.suppress(payload.sourceUrl)
-              qcRef.current.invalidateQueries({ queryKey: ['items', payload.dayId] })
-              qcRef.current.invalidateQueries({ queryKey: ['days'] })
+              invalidateDay(qc, payload.dayId)
             })
           }
         }
@@ -64,12 +41,12 @@ export function useClipboardCapture(): void {
     })
 
     const unsubDuplicate = window.api.on.clipboardDuplicate(() => {
-      showToastRef.current('Already saved today', { durationMs: 3000 })
+      useToast.getState().show('Already saved today', { durationMs: 3000 })
     })
 
     return () => {
       unsubCapture()
       unsubDuplicate()
     }
-  }, [])
+  }, [qc])
 }

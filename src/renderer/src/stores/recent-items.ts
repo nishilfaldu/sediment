@@ -3,30 +3,38 @@ import { create } from 'zustand'
 const RECENT_MS = 800
 
 export interface RecentItemsStore {
-  recentIds: Set<string>
+  expiresAt: Record<string, number>
   markRecent: (id: string) => void
-  isRecent: (id: string) => boolean
+  prune: () => void
 }
 
 export const useRecentItems = create<RecentItemsStore>((set, get) => ({
-  recentIds: new Set(),
+  expiresAt: {},
 
   markRecent(id: string) {
-    set((state) => {
-      const next = new Set(state.recentIds)
-      next.add(id)
-      return { recentIds: next }
-    })
-    setTimeout(() => {
-      set((state) => {
-        const next = new Set(state.recentIds)
-        next.delete(id)
-        return { recentIds: next }
-      })
-    }, RECENT_MS)
+    const until = Date.now() + RECENT_MS
+    set((state) => ({
+      expiresAt: { ...state.expiresAt, [id]: until }
+    }))
+    setTimeout(() => get().prune(), RECENT_MS)
   },
 
-  isRecent(id: string) {
-    return get().recentIds.has(id)
+  prune() {
+    const now = Date.now()
+    set((state) => {
+      const next: Record<string, number> = {}
+      for (const [id, until] of Object.entries(state.expiresAt)) {
+        if (until > now) next[id] = until
+      }
+      if (Object.keys(next).length === Object.keys(state.expiresAt).length) {
+        return state
+      }
+      return { expiresAt: next }
+    })
   }
 }))
+
+export function isRecentItem(expiresAt: Record<string, number>, id: string): boolean {
+  const until = expiresAt[id]
+  return until !== undefined && until > Date.now()
+}

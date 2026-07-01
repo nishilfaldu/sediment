@@ -1,9 +1,7 @@
-import { isLinkArtifact, isNote } from '@shared/item-groups'
 import type { JSX } from 'react'
-import { useMemo } from 'react'
 import { ChevronRightIcon } from '@/components/icons/chevron-right-icon'
 import { ExportMenu } from '@/components/layout/export-menu'
-import { useItems } from '@/hooks/use-items'
+import { useWorkspaceItems } from '@/hooks/use-workspace-items'
 import { formatDayHeading, todayId } from '@/lib/dates'
 import { useCurrentDay } from '@/stores/current-day'
 import { useUI } from '@/stores/ui'
@@ -18,10 +16,7 @@ export function BottomBar(): JSX.Element {
   const { dayId, goToToday } = useCurrentDay()
   const { toggleHistory, historyOpen } = useUI()
   const tab = useWorkspaceTab((s) => s.getTab(dayId))
-  const { data: items = [] } = useItems(dayId)
-
-  const linkCount = useMemo(() => items.filter((i) => isLinkArtifact(i.type)).length, [items])
-  const noteCount = useMemo(() => items.filter((i) => isNote(i.type)).length, [items])
+  const { linkCount, noteCount } = useWorkspaceItems(dayId)
 
   const isToday = dayId === todayId()
   const statusLabel =

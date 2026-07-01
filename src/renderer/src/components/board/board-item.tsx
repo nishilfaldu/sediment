@@ -1,36 +1,18 @@
 import type { JSX } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { TextBlock } from '@/components/blocks/text-block'
-import type { CanvasItemProps } from '@/components/board/canvas-item-types'
+import type { BoardItemProps } from '@/components/board/board-item-types'
 import { ItemCard } from '@/components/cards/item-card'
 import { CloseIcon } from '@/components/icons/close-icon'
 import { ContextMenu } from '@/components/ui/context-menu'
-import { useCurrentDay } from '@/stores/current-day'
-import { useRecentItems } from '@/stores/recent-items'
+import { useBoardItemHighlight } from '@/hooks/use-board-item-highlight'
 
-export type { CanvasItemProps } from '@/components/board/canvas-item-types'
+export type { BoardItemProps } from '@/components/board/board-item-types'
 
-export function CanvasItem({ item, onDelete, onUpdate, autoFocus }: CanvasItemProps): JSX.Element {
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
-  const [flash, setFlash] = useState(false)
+export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProps): JSX.Element {
   const elementRef = useRef<HTMLDivElement>(null)
-  const isRecent = useRecentItems((s) => s.isRecent(item.id))
-
-  const focusItemId = useCurrentDay((s) => s.focusItemId)
-  const clearFocus = useCurrentDay((s) => s.clearFocus)
-
-  useEffect(() => {
-    if (focusItemId !== item.id) return
-    elementRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    setFlash(true)
-    clearFocus()
-  }, [focusItemId, item.id, clearFocus])
-
-  useEffect(() => {
-    if (!flash) return
-    const t = setTimeout(() => setFlash(false), 1600)
-    return () => clearTimeout(t)
-  }, [flash])
+  const { flash, isRecent } = useBoardItemHighlight(item.id, elementRef)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
 
   function handleContextMenu(e: React.MouseEvent): void {
     e.preventDefault()

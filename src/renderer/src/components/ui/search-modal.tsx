@@ -1,4 +1,4 @@
-import { isLinkArtifact } from '@shared/item-groups'
+import { workspaceTabForItemType } from '@shared/item-groups'
 import { TYPE_LABELS } from '@shared/labels'
 import type { JSX } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -89,7 +89,7 @@ export function SearchModal(): JSX.Element | null {
   }
 
   function activate(r: SearchResult): void {
-    setTab(r.dayId, isLinkArtifact(r.type) ? 'links' : 'notes')
+    setTab(r.dayId, workspaceTabForItemType(r.type))
     goToItem(r.dayId, r.id)
     close()
   }

@@ -1,5 +1,6 @@
 import type { ClipboardCapturePayload } from '@shared/clipboard-capture'
 import { todayId } from '@shared/dates'
+import type { UrlDetection } from '@shared/detect-url'
 import { detectUrl } from '@shared/detect-url'
 import { type BrowserWindow, clipboard, ipcMain } from 'electron'
 import { createItemRecord, hasSourceUrlOnDay } from './create-item'
@@ -12,6 +13,7 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 let lastClipboardText = ''
 let ignoreOwnWritesUntil = 0
 const suppressedUrls = new Map<string, number>()
+let lastDuplicateUrl = ''
 
 function isSuppressed(url: string): boolean {
   const until = suppressedUrls.get(url)
@@ -47,27 +49,21 @@ function notifyDuplicate(win: BrowserWindow, dayId: string, sourceUrl: string): 
   win.webContents.send('clipboard:duplicate', { dayId, sourceUrl })
 }
 
-let lastDuplicateUrl = ''
+type CaptureResult = 'captured' | 'duplicate' | 'skipped'
 
-function tryCapture(getWindow: () => BrowserWindow | null): void {
-  if (Date.now() < ignoreOwnWritesUntil) return
-
-  const text = clipboard.readText().trim()
-  if (!text || text === lastClipboardText) return
-  lastClipboardText = text
-
-  const detected = detectUrl(text)
-  if (!detected) return
-  if (isSuppressed(detected.sourceUrl)) return
-
+function captureUrlToToday(
+  detected: UrlDetection,
+  getWindow: () => BrowserWindow | null
+): CaptureResult {
   const dayId = todayId()
+
   if (hasSourceUrlOnDay(dayId, detected.sourceUrl)) {
     const win = getWindow()
     if (win && lastDuplicateUrl !== detected.sourceUrl) {
       lastDuplicateUrl = detected.sourceUrl
       notifyDuplicate(win, dayId, detected.sourceUrl)
     }
-    return
+    return 'duplicate'
   }
 
   lastDuplicateUrl = ''
@@ -81,7 +77,7 @@ function tryCapture(getWindow: () => BrowserWindow | null): void {
   })
 
   const win = getWindow()
-  if (!win) return
+  if (!win) return 'skipped'
 
   notifyCapture(win, {
     id: item.id,
@@ -90,6 +86,22 @@ function tryCapture(getWindow: () => BrowserWindow | null): void {
     sourceUrl: detected.sourceUrl,
     platform: detected.platform
   })
+
+  return 'captured'
+}
+
+function tryCapture(getWindow: () => BrowserWindow | null): void {
+  if (Date.now() < ignoreOwnWritesUntil) return
+
+  const text = clipboard.readText().trim()
+  if (!text || text === lastClipboardText) return
+  lastClipboardText = text
+
+  const detected = detectUrl(text)
+  if (!detected) return
+  if (isSuppressed(detected.sourceUrl)) return
+
+  captureUrlToToday(detected, getWindow)
 }
 
 export function registerClipboardWatcher(getWindow: () => BrowserWindow | null): void {

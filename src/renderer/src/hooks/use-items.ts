@@ -4,6 +4,11 @@ import type { Item } from '@/types'
 
 export type { CreateItemPayload }
 
+function invalidateDay(qc: ReturnType<typeof useQueryClient>, dayId: string): void {
+  qc.invalidateQueries({ queryKey: ['items', dayId] })
+  qc.invalidateQueries({ queryKey: ['days'] })
+}
+
 export function useItems(dayId: string) {
   return useQuery({
     queryKey: ['items', dayId],
@@ -16,8 +21,7 @@ export function useCreateItem() {
   return useMutation({
     mutationFn: (payload: CreateItemPayload) => window.api.items.create(payload),
     onSuccess: (item: Item) => {
-      qc.invalidateQueries({ queryKey: ['items', item.dayId] })
-      qc.invalidateQueries({ queryKey: ['days'] })
+      invalidateDay(qc, item.dayId)
     }
   })
 }
@@ -38,7 +42,7 @@ export function useDeleteItem(dayId: string) {
   return useMutation({
     mutationFn: (id: string) => window.api.items.delete(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['items', dayId] })
+      invalidateDay(qc, dayId)
     }
   })
 }

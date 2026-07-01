@@ -1,6 +1,7 @@
+import type { WorkspaceTab } from '@shared/item-groups'
 import { create } from 'zustand'
 
-export type WorkspaceTab = 'links' | 'notes'
+export type { WorkspaceTab } from '@shared/item-groups'
 
 export interface WorkspaceTabStore {
   tabByDay: Record<string, WorkspaceTab>

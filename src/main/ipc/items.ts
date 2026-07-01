@@ -3,7 +3,7 @@ import { ipcMain } from 'electron'
 import { getDb } from '../db'
 import { items } from '../db/schema'
 import { type CreateItemInput, createItemRecord } from '../services/create-item'
-import { needsOgFetch } from '../services/item-metadata'
+import { fetchOgIfAwaiting } from '../services/item-metadata'
 import { fetchOgMetadata } from '../services/og-fetcher'
 
 export function registerItemsHandlers(): void {
@@ -24,9 +24,7 @@ export function registerItemsHandlers(): void {
       .returning()
       .get()
 
-    if (needsOgFetch(item, { requireNoTitle: true })) {
-      fetchOgMetadata(item.id, item.dayId, item.sourceUrl as string)
-    }
+    fetchOgIfAwaiting(item, fetchOgMetadata, { id: item.id, dayId: item.dayId })
 
     return item
   })
