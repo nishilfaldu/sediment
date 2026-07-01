@@ -52,9 +52,6 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
             className={`border-b-2 pb-1 text-sm font-medium transition-colors ${tabClass(tab === 'links')}`}
           >
             Links
-            {linkItems.length > 0 && (
-              <span className="ml-1.5 text-xs text-stone-400">{linkItems.length}</span>
-            )}
           </button>
           <button
             type="button"
@@ -62,9 +59,6 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
             className={`border-b-2 pb-1 text-sm font-medium transition-colors ${tabClass(tab === 'notes')}`}
           >
             Notes
-            {noteItems.length > 0 && (
-              <span className="ml-1.5 text-xs text-stone-400">{noteItems.length}</span>
-            )}
           </button>
         </div>
 
