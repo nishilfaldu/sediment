@@ -43,6 +43,12 @@ function notifyCapture(win: BrowserWindow, payload: ClipboardCapturePayload): vo
   win.webContents.send('clipboard:captured', payload)
 }
 
+function notifyDuplicate(win: BrowserWindow, dayId: string, sourceUrl: string): void {
+  win.webContents.send('clipboard:duplicate', { dayId, sourceUrl })
+}
+
+let lastDuplicateUrl = ''
+
 function tryCapture(getWindow: () => BrowserWindow | null): void {
   if (Date.now() < ignoreOwnWritesUntil) return
 
@@ -55,7 +61,16 @@ function tryCapture(getWindow: () => BrowserWindow | null): void {
   if (isSuppressed(detected.sourceUrl)) return
 
   const dayId = todayId()
-  if (hasSourceUrlOnDay(dayId, detected.sourceUrl)) return
+  if (hasSourceUrlOnDay(dayId, detected.sourceUrl)) {
+    const win = getWindow()
+    if (win && lastDuplicateUrl !== detected.sourceUrl) {
+      lastDuplicateUrl = detected.sourceUrl
+      notifyDuplicate(win, dayId, detected.sourceUrl)
+    }
+    return
+  }
+
+  lastDuplicateUrl = ''
 
   const item = createItemRecord({
     dayId,

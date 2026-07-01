@@ -7,3 +7,8 @@ export interface ClipboardCapturePayload {
   sourceUrl: string
   platform?: Platform
 }
+
+export interface ClipboardDuplicatePayload {
+  dayId: string
+  sourceUrl: string
+}

@@ -1,4 +1,4 @@
-import type { ClipboardCapturePayload } from '@shared/clipboard-capture'
+import type { ClipboardCapturePayload, ClipboardDuplicatePayload } from '@shared/clipboard-capture'
 import type { CreateItemPayload } from '@shared/contracts'
 import type { Api } from '@shared/ipc'
 import { contextBridge, ipcRenderer } from 'electron'
@@ -33,6 +33,12 @@ const api: Api = {
         cb(payload)
       ipcRenderer.on('clipboard:captured', handler)
       return () => ipcRenderer.removeListener('clipboard:captured', handler)
+    },
+    clipboardDuplicate: (cb: (payload: ClipboardDuplicatePayload) => void) => {
+      const handler = (_e: Electron.IpcRendererEvent, payload: ClipboardDuplicatePayload) =>
+        cb(payload)
+      ipcRenderer.on('clipboard:duplicate', handler)
+      return () => ipcRenderer.removeListener('clipboard:duplicate', handler)
     },
     itemMetadataUpdated: (cb: (payload: { id: string; dayId: string }) => void) => {
       const handler = (_e: Electron.IpcRendererEvent, payload: { id: string; dayId: string }) =>

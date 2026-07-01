@@ -1,3 +1,4 @@
+import { formatDistanceToNow } from 'date-fns'
 import type { JSX } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import type { Item } from '@/types'
@@ -59,33 +60,43 @@ export function TextBlock({
     }
   }
 
+  const updatedLabel = formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })
+
   if (editing) {
     return (
-      <textarea
-        ref={textareaRef}
-        className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-stone-800 placeholder-stone-300 outline-none"
-        value={draft}
-        placeholder="Write your thoughts…"
-        onChange={(e) => {
-          setDraft(e.target.value)
-          resize()
-        }}
-        onBlur={commit}
-        onKeyDown={handleKeyDown}
-        rows={1}
-      />
+      <div className="flex flex-col gap-2">
+        <textarea
+          ref={textareaRef}
+          className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-stone-800 placeholder-stone-300 outline-none dark:text-stone-200 dark:placeholder-stone-500"
+          value={draft}
+          placeholder="Write your thoughts…"
+          onChange={(e) => {
+            setDraft(e.target.value)
+            resize()
+          }}
+          onBlur={commit}
+          onKeyDown={handleKeyDown}
+          rows={1}
+        />
+        <p className="text-[11px] text-stone-400 dark:text-stone-500">Edited {updatedLabel}</p>
+      </div>
     )
   }
 
   return (
-    <div
-      className="cursor-text text-[15px] leading-relaxed text-stone-800 select-text"
-      onClick={() => setEditing(true)}
-    >
-      {item.content ? (
-        <p className="whitespace-pre-wrap">{item.content}</p>
-      ) : (
-        <p className="text-stone-300">Empty note</p>
+    <div className="flex flex-col gap-2">
+      <div
+        className="cursor-text text-[15px] leading-relaxed text-stone-800 select-text dark:text-stone-200"
+        onClick={() => setEditing(true)}
+      >
+        {item.content ? (
+          <p className="whitespace-pre-wrap">{item.content}</p>
+        ) : (
+          <p className="text-stone-300 dark:text-stone-500">Empty note</p>
+        )}
+      </div>
+      {item.content && (
+        <p className="text-[11px] text-stone-400 dark:text-stone-500">Edited {updatedLabel}</p>
       )}
     </div>
   )

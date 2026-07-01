@@ -3,6 +3,7 @@ import { TYPE_LABELS } from '@shared/labels'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { useCurrentDay } from '@/stores/current-day'
+import { useRecentItems } from '@/stores/recent-items'
 import { useToast } from '@/stores/toast'
 import { useWorkspaceTab } from '@/stores/workspace-tab'
 
@@ -15,11 +16,13 @@ export function useClipboardCapture(): void {
   const { setDayId } = useCurrentDay()
   const { show: showToast } = useToast()
   const setTab = useWorkspaceTab((s) => s.setTab)
+  const markRecent = useRecentItems((s) => s.markRecent)
 
   const setDayIdRef = useRef(setDayId)
   const showToastRef = useRef(showToast)
   const setTabRef = useRef(setTab)
   const qcRef = useRef(qc)
+  const markRecentRef = useRef(markRecent)
 
   useEffect(() => {
     setDayIdRef.current = setDayId
@@ -33,15 +36,20 @@ export function useClipboardCapture(): void {
   useEffect(() => {
     qcRef.current = qc
   }, [qc])
+  useEffect(() => {
+    markRecentRef.current = markRecent
+  }, [markRecent])
 
   useEffect(() => {
-    const unsub = window.api.on.clipboardCaptured((payload) => {
+    const unsubCapture = window.api.on.clipboardCaptured((payload) => {
       setDayIdRef.current(payload.dayId)
       setTabRef.current(payload.dayId, 'links')
+      markRecentRef.current(payload.id)
       qcRef.current.invalidateQueries({ queryKey: ['items', payload.dayId] })
       qcRef.current.invalidateQueries({ queryKey: ['days'] })
 
       showToastRef.current(`Saved ${captureLabel(payload)}`, {
+        durationMs: 8000,
         action: {
           label: 'Undo',
           onClick: () => {
@@ -54,6 +62,14 @@ export function useClipboardCapture(): void {
         }
       })
     })
-    return unsub
+
+    const unsubDuplicate = window.api.on.clipboardDuplicate(() => {
+      showToastRef.current('Already saved today', { durationMs: 3000 })
+    })
+
+    return () => {
+      unsubCapture()
+      unsubDuplicate()
+    }
   }, [])
 }

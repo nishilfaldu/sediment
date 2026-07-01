@@ -8,7 +8,7 @@ export function AppShell(): JSX.Element {
   const { dayId } = useCurrentDay()
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-white">
+    <div className="flex h-screen w-screen flex-col bg-white dark:bg-stone-950">
       <div
         className="h-3 w-full shrink-0 select-none"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}

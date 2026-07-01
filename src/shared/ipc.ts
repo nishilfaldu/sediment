@@ -1,8 +1,10 @@
-import type { ClipboardCapturePayload } from './clipboard-capture'
+import type { ClipboardCapturePayload, ClipboardDuplicatePayload } from './clipboard-capture'
+import type { DaySummary } from './day-summary'
 import type { CreateItemPayload } from './contracts'
 import type { Day, Item, SearchResult } from './types'
 
-export type { ClipboardCapturePayload } from './clipboard-capture'
+export type { ClipboardCapturePayload, ClipboardDuplicatePayload } from './clipboard-capture'
+export type { DaySummary } from './day-summary'
 export type { CreateItemPayload, MetadataPatch } from './contracts'
 
 export interface ExportResult {
@@ -18,7 +20,7 @@ export interface Api {
     delete: (id: string) => Promise<void>
   }
   days: {
-    list: () => Promise<Day[]>
+    list: () => Promise<DaySummary[]>
     getOrCreate: (dayId: string) => Promise<Day>
   }
   search: {
@@ -34,6 +36,7 @@ export interface Api {
   }
   on: {
     clipboardCaptured: (cb: (payload: ClipboardCapturePayload) => void) => () => void
+    clipboardDuplicate: (cb: (payload: ClipboardDuplicatePayload) => void) => () => void
     itemMetadataUpdated: (cb: (payload: { id: string; dayId: string }) => void) => () => void
   }
 }

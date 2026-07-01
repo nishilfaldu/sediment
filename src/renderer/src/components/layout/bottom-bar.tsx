@@ -30,30 +30,34 @@ export function BottomBar(): JSX.Element {
       : formatCount(noteCount, 'note', 'notes')
 
   return (
-    <div className="flex h-9 shrink-0 select-none items-center justify-between border-t border-stone-100 bg-white px-4 text-xs text-stone-400">
-      <span className="text-stone-500">{statusLabel}</span>
+    <div className="flex h-9 shrink-0 select-none items-center justify-between border-t border-stone-100 bg-white px-4 text-xs text-stone-400 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-500">
+      <span className="text-stone-500 dark:text-stone-400">{statusLabel}</span>
 
       <button
         type="button"
         onClick={isToday ? undefined : goToToday}
         className={
-          isToday ? 'cursor-default text-stone-400' : 'text-stone-500 hover:text-stone-700'
+          isToday
+            ? 'cursor-default text-stone-400 dark:text-stone-500'
+            : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200'
         }
       >
         {formatDayHeading(dayId)}
-        {!isToday && <span className="ml-1 text-stone-300">↩ today</span>}
+        {!isToday && <span className="ml-1 text-stone-300 dark:text-stone-600">↩ today</span>}
       </button>
 
       <div className="flex items-center gap-3">
         {(tab === 'links' ? linkCount : noteCount) > 0 && <ExportMenu dayId={dayId} />}
         {tab === 'links' && (
-          <span className="hidden text-stone-400 sm:inline">Copy a link to save</span>
+          <span className="hidden text-stone-400 sm:inline dark:text-stone-500">
+            Copy a link to save
+          </span>
         )}
         {!historyOpen && (
           <button
             type="button"
             onClick={toggleHistory}
-            className="flex items-center gap-1 text-stone-500 hover:text-stone-700"
+            className="flex items-center gap-1 text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
             aria-label="Open history"
           >
             History

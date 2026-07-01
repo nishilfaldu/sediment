@@ -7,7 +7,7 @@ export interface ExportMenuProps {
   dayId: string
 }
 
-// Bottom-bar "Export ▾" popover: copy/share the current day for AI or archive.
+// Bottom-bar "Export day" popover: copy/share the current day for AI or archive.
 export function ExportMenu({ dayId }: ExportMenuProps): JSX.Element {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -37,39 +37,39 @@ export function ExportMenu({ dayId }: ExportMenuProps): JSX.Element {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="hover:text-stone-600 transition-colors"
+        className="text-stone-500 transition-colors hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
       >
-        Export ▾
+        Export day
       </button>
 
       {open && (
-        <div className="absolute bottom-full right-0 mb-1.5 min-w-[180px] rounded-lg border border-stone-200 bg-white py-1 text-stone-600 shadow-lg">
+        <div className="absolute bottom-full right-0 mb-1.5 min-w-[180px] rounded-lg border border-stone-200 bg-white py-1 text-stone-600 shadow-lg dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300">
           <button
             type="button"
             onClick={copy}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50 dark:hover:bg-stone-800"
           >
             Copy as Markdown
           </button>
           <button
             type="button"
             onClick={saveFile}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50 dark:hover:bg-stone-800"
           >
             Save as file…
           </button>
-          <div className="my-1 border-t border-stone-100" />
+          <div className="my-1 border-t border-stone-100 dark:border-stone-800" />
           <button
             type="button"
             onClick={() => openInAi('chatgpt')}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50 dark:hover:bg-stone-800"
           >
             Open in ChatGPT
           </button>
           <button
             type="button"
             onClick={() => openInAi('claude')}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50 dark:hover:bg-stone-800"
           >
             Open in Claude
           </button>
