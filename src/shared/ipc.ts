@@ -1,9 +1,11 @@
+import type { ClipboardCapturePayload, ClipboardDuplicatePayload } from './clipboard-capture'
+import type { DaySummary } from './day-summary'
 import type { CreateItemPayload } from './contracts'
-import type { ShortcutPayload } from './shortcut'
 import type { Day, Item, SearchResult } from './types'
 
+export type { ClipboardCapturePayload, ClipboardDuplicatePayload } from './clipboard-capture'
+export type { DaySummary } from './day-summary'
 export type { CreateItemPayload, MetadataPatch } from './contracts'
-export type { ShortcutPayload } from './shortcut'
 
 export interface ExportResult {
   saved: boolean
@@ -16,11 +18,9 @@ export interface Api {
     create: (payload: CreateItemPayload) => Promise<Item>
     update: (id: string, patch: Partial<CreateItemPayload>) => Promise<Item>
     delete: (id: string) => Promise<void>
-    move: (id: string, x: number, y: number) => Promise<Item>
-    bringToFront: (id: string, dayId: string) => Promise<Item>
   }
   days: {
-    list: () => Promise<Day[]>
+    list: () => Promise<DaySummary[]>
     getOrCreate: (dayId: string) => Promise<Day>
   }
   search: {
@@ -31,8 +31,12 @@ export interface Api {
     copyMarkdown: (dayId: string) => Promise<void>
     openInAi: (dayId: string, provider: 'chatgpt' | 'claude') => Promise<void>
   }
+  clipboard: {
+    suppress: (url: string) => Promise<void>
+  }
   on: {
-    shortcutTriggered: (cb: (payload: ShortcutPayload) => void) => () => void
+    clipboardCaptured: (cb: (payload: ClipboardCapturePayload) => void) => () => void
+    clipboardDuplicate: (cb: (payload: ClipboardDuplicatePayload) => void) => () => void
     itemMetadataUpdated: (cb: (payload: { id: string; dayId: string }) => void) => () => void
   }
 }

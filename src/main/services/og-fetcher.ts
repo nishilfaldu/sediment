@@ -1,6 +1,6 @@
+import type { MetadataPatch } from '@shared/contracts'
 import { load } from 'cheerio'
 import { BrowserWindow } from 'electron'
-import type { MetadataPatch } from '@shared/contracts'
 import { patchItemMetadata } from './item-metadata'
 
 function getMeta($: ReturnType<typeof load>, ...props: string[]): string | null {
@@ -81,38 +81,42 @@ function pushUpdate(itemId: string, dayId: string): void {
   BrowserWindow.getAllWindows()[0]?.webContents.send('item:metadataUpdated', { id: itemId, dayId })
 }
 
+export async function fetchUrlMetadata(url: string): Promise<MetadataPatch> {
+  if (isTwitterUrl(url)) {
+    return fetchTwitterMeta(url)
+  }
+  if (isVimeoUrl(url)) {
+    return fetchVimeoMeta(url)
+  }
+
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Sediment/1.0)' },
+    signal: AbortSignal.timeout(8000)
+  })
+  if (!res.ok) {
+    return { title: null, description: null, thumbnail: null, metadata: null }
+  }
+
+  const html = await res.text()
+  const $ = load(html)
+
+  const pageTitle = $('title').first().text().trim() || null
+  const title = getMeta($, 'og:title', 'twitter:title') ?? pageTitle
+  const description = getMeta($, 'og:description', 'twitter:description', 'description')
+  const thumbnail = getMeta($, 'og:image', 'twitter:image')
+  const siteName = getMeta($, 'og:site_name')
+
+  return {
+    title,
+    description,
+    thumbnail,
+    metadata: siteName ? JSON.stringify({ siteName }) : null
+  }
+}
+
 export async function fetchOgMetadata(itemId: string, dayId: string, url: string): Promise<void> {
   try {
-    let meta: MetadataPatch
-
-    if (isTwitterUrl(url)) {
-      meta = await fetchTwitterMeta(url)
-    } else if (isVimeoUrl(url)) {
-      meta = await fetchVimeoMeta(url)
-    } else {
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Sediment/1.0)' },
-        signal: AbortSignal.timeout(8000)
-      })
-      if (!res.ok) return
-
-      const html = await res.text()
-      const $ = load(html)
-
-      const pageTitle = $('title').first().text().trim() || null
-      const title = getMeta($, 'og:title', 'twitter:title') ?? pageTitle
-      const description = getMeta($, 'og:description', 'twitter:description', 'description')
-      const thumbnail = getMeta($, 'og:image', 'twitter:image')
-      const siteName = getMeta($, 'og:site_name')
-
-      meta = {
-        title,
-        description,
-        thumbnail,
-        metadata: siteName ? JSON.stringify({ siteName }) : null
-      }
-    }
-
+    const meta = await fetchUrlMetadata(url)
     patchItemMetadata(itemId, meta)
     pushUpdate(itemId, dayId)
   } catch {

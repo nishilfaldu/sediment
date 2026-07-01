@@ -1,5 +1,5 @@
-import { ipcMain } from 'electron'
 import type { SearchResult } from '@shared/types'
+import { ipcMain } from 'electron'
 import { getSqlite } from '../db'
 
 function toMatchQuery(raw: string): string {

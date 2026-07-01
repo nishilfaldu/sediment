@@ -1,6 +1,6 @@
-import type { Api } from '@shared/ipc'
+import type { ClipboardCapturePayload, ClipboardDuplicatePayload } from '@shared/clipboard-capture'
 import type { CreateItemPayload } from '@shared/contracts'
-import type { ShortcutPayload } from '@shared/shortcut'
+import type { Api } from '@shared/ipc'
 import { contextBridge, ipcRenderer } from 'electron'
 
 const api: Api = {
@@ -9,10 +9,7 @@ const api: Api = {
     create: (payload: CreateItemPayload) => ipcRenderer.invoke('items:create', payload),
     update: (id: string, patch: Partial<CreateItemPayload>) =>
       ipcRenderer.invoke('items:update', id, patch),
-    delete: (id: string) => ipcRenderer.invoke('items:delete', id),
-    move: (id: string, x: number, y: number) => ipcRenderer.invoke('items:move', id, x, y),
-    bringToFront: (id: string, dayId: string) =>
-      ipcRenderer.invoke('items:bringToFront', id, dayId)
+    delete: (id: string) => ipcRenderer.invoke('items:delete', id)
   },
   days: {
     list: () => ipcRenderer.invoke('days:list'),
@@ -27,11 +24,21 @@ const api: Api = {
     openInAi: (dayId: string, provider: 'chatgpt' | 'claude') =>
       ipcRenderer.invoke('export:openInAi', dayId, provider)
   },
+  clipboard: {
+    suppress: (url: string) => ipcRenderer.invoke('clipboard:suppress', url)
+  },
   on: {
-    shortcutTriggered: (cb: (payload: ShortcutPayload) => void) => {
-      const handler = (_e: Electron.IpcRendererEvent, payload: ShortcutPayload) => cb(payload)
-      ipcRenderer.on('shortcut:triggered', handler)
-      return () => ipcRenderer.removeListener('shortcut:triggered', handler)
+    clipboardCaptured: (cb: (payload: ClipboardCapturePayload) => void) => {
+      const handler = (_e: Electron.IpcRendererEvent, payload: ClipboardCapturePayload) =>
+        cb(payload)
+      ipcRenderer.on('clipboard:captured', handler)
+      return () => ipcRenderer.removeListener('clipboard:captured', handler)
+    },
+    clipboardDuplicate: (cb: (payload: ClipboardDuplicatePayload) => void) => {
+      const handler = (_e: Electron.IpcRendererEvent, payload: ClipboardDuplicatePayload) =>
+        cb(payload)
+      ipcRenderer.on('clipboard:duplicate', handler)
+      return () => ipcRenderer.removeListener('clipboard:duplicate', handler)
     },
     itemMetadataUpdated: (cb: (payload: { id: string; dayId: string }) => void) => {
       const handler = (_e: Electron.IpcRendererEvent, payload: { id: string; dayId: string }) =>

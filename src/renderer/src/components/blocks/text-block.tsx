@@ -1,12 +1,11 @@
+import { formatDistanceToNow } from 'date-fns'
 import type { JSX } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { detectUrl } from '@shared/detect-url'
-import type { Item, ItemType, Platform } from '@/types'
+import type { Item } from '@/types'
 
 export interface TextBlockProps {
   item: Item
   onSave: (content: string) => void
-  onUpgrade: (type: ItemType, sourceUrl: string, platform?: Platform) => void
   onEmpty: () => void
   autoFocus?: boolean
 }
@@ -14,14 +13,12 @@ export interface TextBlockProps {
 export function TextBlock({
   item,
   onSave,
-  onUpgrade,
   onEmpty,
   autoFocus = false
 }: TextBlockProps): JSX.Element {
   const [editing, setEditing] = useState(autoFocus)
   const [draft, setDraft] = useState(item.content ?? '')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const upgradingRef = useRef(false)
 
   function resize(): void {
     const el = textareaRef.current
@@ -39,23 +36,8 @@ export function TextBlock({
     }
   }, [editing])
 
-  function upgrade(type: ItemType, sourceUrl: string, platform?: Platform): void {
-    upgradingRef.current = true
-    setEditing(false)
-    onUpgrade(type, sourceUrl, platform)
-  }
-
   function commit(): void {
-    if (upgradingRef.current) {
-      upgradingRef.current = false
-      return
-    }
     const trimmed = draft.trim()
-    const detected = detectUrl(trimmed)
-    if (detected) {
-      upgrade(detected.type, detected.sourceUrl, detected.platform)
-      return
-    }
     if (!trimmed) {
       onEmpty()
       setEditing(false)
@@ -65,15 +47,6 @@ export function TextBlock({
       onSave(trimmed)
     }
     setEditing(false)
-  }
-
-  function handlePaste(e: React.ClipboardEvent): void {
-    const pasted = e.clipboardData.getData('text').trim()
-    const detected = detectUrl(pasted)
-    if (detected && !draft.trim()) {
-      e.preventDefault()
-      upgrade(detected.type, detected.sourceUrl, detected.platform)
-    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent): void {
@@ -87,35 +60,43 @@ export function TextBlock({
     }
   }
 
+  const updatedLabel = formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })
+
   if (editing) {
     return (
-      <textarea
-        ref={textareaRef}
-        className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-stone-800 placeholder-stone-300 outline-none"
-        value={draft}
-        placeholder="Write something…"
-        onChange={(e) => {
-          setDraft(e.target.value)
-          resize()
-        }}
-        onBlur={commit}
-        onPaste={handlePaste}
-        onKeyDown={handleKeyDown}
-        onPointerDown={(e) => e.stopPropagation()}
-        rows={1}
-      />
+      <div className="flex flex-col gap-2">
+        <textarea
+          ref={textareaRef}
+          className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-stone-800 placeholder-stone-300 outline-none dark:text-stone-200 dark:placeholder-stone-500"
+          value={draft}
+          placeholder="Write your thoughts…"
+          onChange={(e) => {
+            setDraft(e.target.value)
+            resize()
+          }}
+          onBlur={commit}
+          onKeyDown={handleKeyDown}
+          rows={1}
+        />
+        <p className="text-[11px] text-stone-400 dark:text-stone-500">Edited {updatedLabel}</p>
+      </div>
     )
   }
 
   return (
-    <div
-      className="cursor-text text-[15px] leading-relaxed text-stone-800 select-text"
-      onClick={() => setEditing(true)}
-    >
-      {item.content ? (
-        <p className="whitespace-pre-wrap">{item.content}</p>
-      ) : (
-        <p className="text-stone-300">Empty</p>
+    <div className="flex flex-col gap-2">
+      <div
+        className="cursor-text text-[15px] leading-relaxed text-stone-800 select-text dark:text-stone-200"
+        onClick={() => setEditing(true)}
+      >
+        {item.content ? (
+          <p className="whitespace-pre-wrap">{item.content}</p>
+        ) : (
+          <p className="text-stone-300 dark:text-stone-500">Empty note</p>
+        )}
+      </div>
+      {item.content && (
+        <p className="text-[11px] text-stone-400 dark:text-stone-500">Edited {updatedLabel}</p>
       )}
     </div>
   )

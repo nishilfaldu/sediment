@@ -8,9 +8,6 @@ export type ItemType = (typeof ITEM_TYPES)[number]
 export const PLATFORMS = ['youtube', 'vimeo', 'twitter', 'instagram', 'bluesky'] as const
 export type Platform = (typeof PLATFORMS)[number]
 
-export const WIDTH_HINTS = ['small', 'medium', 'large'] as const
-export type WidthHint = (typeof WIDTH_HINTS)[number]
-
 export interface Item {
   id: string
   dayId: string
@@ -23,11 +20,6 @@ export interface Item {
   imagePath: string | null
   platform: Platform | null
   metadata: string | null
-  x: number
-  y: number
-  position: number
-  // Reserved for future layout hints — not used by the freeform canvas yet.
-  widthHint: WidthHint
   createdAt: number
   updatedAt: number
 }

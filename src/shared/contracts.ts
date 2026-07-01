@@ -7,8 +7,10 @@ export interface CreateItemPayload {
   content?: string | null
   sourceUrl?: string | null
   platform?: Platform | null
-  x?: number
-  y?: number
+  title?: string | null
+  description?: string | null
+  thumbnail?: string | null
+  metadata?: string | null
 }
 
 export interface MetadataPatch {

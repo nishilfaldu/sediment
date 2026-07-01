@@ -1,16 +1,18 @@
-import { eq } from 'drizzle-orm'
 import type { MetadataPatch } from '@shared/contracts'
-import type { ItemType } from '@shared/types'
+import { isAwaitingOgMetadata } from '@shared/item-metadata'
+import { eq } from 'drizzle-orm'
 import { getDb } from '../db'
 import { items } from '../db/schema'
 
-export function needsOgFetch(
-  item: { sourceUrl: string | null; type: ItemType; title?: string | null },
-  options?: { requireNoTitle?: boolean }
-): boolean {
-  if (!item.sourceUrl) return false
-  if (options?.requireNoTitle && item.title) return false
-  return item.type === 'link' || item.type === 'video' || item.type === 'social'
+export { isAwaitingOgMetadata, needsOgFetch } from '@shared/item-metadata'
+
+export function fetchOgIfAwaiting(
+  item: Parameters<typeof isAwaitingOgMetadata>[0],
+  fetch: (id: string, dayId: string, sourceUrl: string) => void,
+  ids: { id: string; dayId: string }
+): void {
+  if (!isAwaitingOgMetadata(item)) return
+  fetch(ids.id, ids.dayId, item.sourceUrl)
 }
 
 export function patchItemMetadata(id: string, meta: MetadataPatch): void {

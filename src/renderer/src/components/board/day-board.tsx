@@ -1,93 +1,81 @@
 import type { JSX } from 'react'
-import { CanvasItem } from '@/components/board/canvas-item'
-import { useBoardDrop } from '@/hooks/use-board-drop'
-import {
-  useBringToFront,
-  useCreateItem,
-  useDeleteItem,
-  useItems,
-  useMoveItem,
-  useUpdateItem
-} from '@/hooks/use-items'
-import { findFreeSpot, measureCardRects } from '@/lib/layout'
-import type { ItemType, Platform } from '@/types'
+import { BoardItem } from '@/components/board/board-item'
+import { WorkspaceEmptyState } from '@/components/board/workspace-empty-state'
+import { WorkspaceTabs } from '@/components/board/workspace-tabs'
+import { useCreateItem, useDeleteItem, useUpdateItem } from '@/hooks/use-items'
+import { useWorkspaceItems } from '@/hooks/use-workspace-items'
+import { useWorkspaceTab, type WorkspaceTab } from '@/stores/workspace-tab'
 
 export interface DayBoardProps {
   dayId: string
 }
 
+const addNoteButtonClass =
+  'rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800'
+
 export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
-  const { data: items = [], isLoading } = useItems(dayId)
+  const { links, notes, isLoading } = useWorkspaceItems(dayId)
   const createItem = useCreateItem()
   const updateItem = useUpdateItem()
   const deleteItem = useDeleteItem(dayId)
-  const moveItem = useMoveItem()
-  const bringToFront = useBringToFront()
-  const { isDraggingOver, dropHandlers } = useBoardDrop(dayId)
+  const tab = useWorkspaceTab((s) => s.getTab(dayId))
+  const setTab = useWorkspaceTab((s) => s.setTab)
 
-  // Highest current stacking order — used to skip a redundant bring-to-front.
-  const maxPosition = items.reduce((m, it) => Math.max(m, it.position), 0)
+  const visibleItems = tab === 'links' ? links : notes
 
-  function handleCanvasClick(e: React.MouseEvent<HTMLDivElement>): void {
-    // Only fire on clicks that land directly on the canvas background
-    if (e.target !== e.currentTarget) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    // Nudge to a free spot (measuring real card heights) so a new note never
-    // spawns under an existing item.
-    const spot = findFreeSpot(
-      measureCardRects(e.currentTarget),
-      Math.round(e.clientX - rect.left),
-      Math.round(e.clientY - rect.top)
-    )
-    createItem.mutate({ dayId, type: 'text', content: '', x: spot.x, y: spot.y })
+  function handleTabChange(next: WorkspaceTab): void {
+    setTab(dayId, next)
   }
 
-  function handleUpgrade(id: string, type: ItemType, sourceUrl: string, platform?: Platform): void {
-    updateItem.mutate({ id, patch: { type, sourceUrl, content: null, platform: platform ?? null } })
+  function handleAddNote(): void {
+    setTab(dayId, 'notes')
+    createItem.mutate({ dayId, type: 'text', content: '' })
   }
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-stone-300">Loading…</div>
+      <div className="flex h-full items-center justify-center text-sm text-stone-300 dark:text-stone-600">
+        Loading…
+      </div>
     )
   }
 
   return (
-    // Scroll container — fills the main area. The inset ring is the drop-target
-    // cue: it tracks the viewport, not the 4000×3000 surface, so it stays visible.
-    <div
-      className={`h-full w-full overflow-auto bg-white ${
-        isDraggingOver ? 'ring-2 ring-inset ring-sky-400/50 bg-sky-50/30' : ''
-      }`}
-    >
-      {/*
-       * Canvas surface — large fixed size so items can be placed anywhere.
-       * Absolutely positioned children don't contribute to scroll height on
-       * their own, so a minimum explicit size is required.
-       */}
-      <div
-        className="relative"
-        style={{ width: 4000, height: 3000 }}
-        onClick={handleCanvasClick}
-        {...dropHandlers}
-      >
-        {items.map((item, index) => (
-          <CanvasItem
-            key={item.id}
-            item={item}
-            onDelete={() => deleteItem.mutate(item.id)}
-            onUpdate={(content) => updateItem.mutate({ id: item.id, patch: { content } })}
-            onUpgrade={(type, sourceUrl, platform) =>
-              handleUpgrade(item.id, type, sourceUrl, platform)
-            }
-            onMove={(x, y) => moveItem.mutate({ id: item.id, x, y, dayId })}
-            onBringToFront={() => {
-              if (item.position < maxPosition) bringToFront.mutate({ id: item.id, dayId })
-            }}
-            autoFocus={item.type === 'text' && item.content === '' && index === items.length - 1}
-          />
-        ))}
+    <div className="flex h-full w-full flex-col overflow-auto bg-stone-50/60 dark:bg-stone-950">
+      <div className="relative shrink-0 border-b border-stone-100 bg-white dark:border-stone-800 dark:bg-stone-900">
+        <WorkspaceTabs active={tab} onChange={handleTabChange} />
+        {tab === 'notes' && visibleItems.length > 0 && (
+          <button
+            type="button"
+            onClick={handleAddNote}
+            className={`absolute right-6 top-1/2 -translate-y-1/2 ${addNoteButtonClass}`}
+          >
+            Add note
+          </button>
+        )}
       </div>
+
+      {visibleItems.length === 0 ? (
+        <WorkspaceEmptyState tab={tab} onAddNote={handleAddNote} />
+      ) : tab === 'links' ? (
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 p-6">
+          {visibleItems.map((item) => (
+            <BoardItem key={item.id} item={item} onDelete={() => deleteItem.mutate(item.id)} />
+          ))}
+        </div>
+      ) : (
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 p-6">
+          {visibleItems.map((item, index) => (
+            <BoardItem
+              key={item.id}
+              item={item}
+              onDelete={() => deleteItem.mutate(item.id)}
+              onUpdate={(content) => updateItem.mutate({ id: item.id, patch: { content } })}
+              autoFocus={item.content === '' && index === visibleItems.length - 1}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

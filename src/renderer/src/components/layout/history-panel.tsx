@@ -11,19 +11,19 @@ export function HistoryPanel(): JSX.Element {
 
   return (
     <aside
-      className={`flex h-full flex-col border-l border-stone-100 bg-white transition-all duration-200 overflow-hidden ${
+      className={`flex h-full flex-col border-l border-stone-100 bg-white transition-all duration-200 overflow-hidden dark:border-stone-800 dark:bg-stone-950 ${
         historyOpen ? 'w-48 min-w-[12rem]' : 'w-0 min-w-0'
       }`}
     >
       <div className="flex min-w-[12rem] flex-col h-full">
-        <div className="flex shrink-0 items-center justify-between px-4 pt-5 pb-3">
-          <span className="text-[11px] font-semibold tracking-widest text-stone-300 uppercase">
+        <div className="flex shrink-0 items-center justify-between px-3 pt-4 pb-2">
+          <span className="text-[11px] font-semibold tracking-widest text-stone-400 uppercase dark:text-stone-500">
             History
           </span>
           <button
             type="button"
             onClick={toggleHistory}
-            className="rounded p-0.5 text-stone-300 hover:text-stone-500 transition-colors"
+            className="rounded p-0.5 text-stone-300 hover:text-stone-500 transition-colors dark:text-stone-600 dark:hover:text-stone-400"
             aria-label="Collapse history"
           >
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">

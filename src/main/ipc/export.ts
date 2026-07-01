@@ -3,6 +3,7 @@ import { asc, eq } from 'drizzle-orm'
 import { BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron'
 import { getDb } from '../db'
 import { type Item, items } from '../db/schema'
+import { ignoreNextClipboardWrites } from '../services/clipboard-watcher'
 import { imageUrlToDiskPath } from '../services/image-store'
 
 export interface ExportResult {
@@ -47,7 +48,7 @@ function renderMarkdown(dayId: string, rows: Item[], forPrompt: boolean): string
 }
 
 function getDayMarkdown(dayId: string, forPrompt: boolean): string {
-  // Order by creation time (position is visual stacking order, not list order).
+  // Order by creation time.
   const rows = getDb()
     .select()
     .from(items)
@@ -89,6 +90,7 @@ export function registerExportHandlers(): void {
 
   // Copy the day's Markdown to the clipboard for pasting into an AI model.
   ipcMain.handle('export:copyMarkdown', (_e, dayId: string): void => {
+    ignoreNextClipboardWrites()
     clipboard.writeText(getDayMarkdown(dayId, true))
   })
 
