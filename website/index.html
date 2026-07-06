@@ -234,41 +234,7 @@
   }
   .dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--ink-30); }
   .board-bar .app { flex: 1; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--ink-60); margin-right: 40px; }
-  .board-head {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 18px 22px 0;
-  }
-  .board-day { font-family: var(--display); font-weight: 700; font-size: 17px; }
-  .board-tabs { display: flex; font-family: var(--mono); font-size: 11.5px; border: 1px solid var(--ink-30); }
-  .board-tab { padding: 5px 16px; color: var(--ink-60); }
-  .board-tab.on { background: var(--ink); color: var(--paper); }
-  .board-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 14px; padding: 18px 22px 24px;
-  }
-  .bcard {
-    border: 1px solid var(--ink-12);
-    background: #fff;
-    opacity: 0; transform: translateY(12px);
-    animation: settle 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
-  }
-  @keyframes settle { to { opacity: 1; transform: translateY(0); } }
-  .bcard:nth-child(1) { animation-delay: 0.2s; }
-  .bcard:nth-child(2) { animation-delay: 0.55s; }
-  .bcard:nth-child(3) { animation-delay: 0.9s; }
-  .bcard:nth-child(4) { animation-delay: 1.25s; }
-  .bcard:nth-child(5) { animation-delay: 1.6s; }
-  .bcard:nth-child(6) { animation-delay: 1.95s; }
-  .bthumb { height: 66px; }
-  .m1 { background: #C9CBB9; } .m2 { background: #B7C4C6; } .m3 { background: #D5C6AE; }
-  .m4 { background: #A9B8A4; } .m5 { background: #CBB6AB; } .m6 { background: #BFC0C8; }
-  .bbody { padding: 9px 11px 11px; }
-  .btag {
-    font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--glauconite);
-  }
-  .bline { height: 7px; background: var(--ink-12); margin-top: 7px; }
-  .bline.short { width: 60%; opacity: 0.6; }
+  .board-shot { display: block; width: 100%; height: auto; }
   figcaption {
     font-family: var(--mono);
     font-size: 12px;
@@ -390,8 +356,6 @@
     .page { margin-left: 0; }
     .measure, .topbar-inner { padding-left: 24px; padding-right: 24px; }
     .topnav a:not(.dl) { display: none; }
-    .board-grid { grid-template-columns: repeat(2, 1fr); }
-    .bcard:nth-child(5), .bcard:nth-child(6) { display: none; }
     .phase, .comp-row { grid-template-columns: 1fr; gap: 8px; }
     .prov-grid { grid-template-columns: 1fr; gap: 32px; }
     .stratum { padding: 64px 0; }
@@ -400,7 +364,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .bcard { animation: none; opacity: 1; transform: none; }
     .rail-marker { transition: none; }
   }
 </style>
@@ -464,23 +427,15 @@
           <span class="dot"></span><span class="dot"></span><span class="dot"></span>
           <span class="app">Sediment</span>
         </div>
-        <div class="board-head">
-          <span class="board-day" id="board-day">Today</span>
-          <div class="board-tabs">
-            <span class="board-tab on">Links</span>
-            <span class="board-tab">Notes</span>
-          </div>
-        </div>
-        <div class="board-grid">
-          <div class="bcard"><div class="bthumb m2"></div><div class="bbody"><span class="btag">Article</span><div class="bline"></div><div class="bline short"></div></div></div>
-          <div class="bcard"><div class="bthumb m5"></div><div class="bbody"><span class="btag">Video</span><div class="bline"></div><div class="bline short"></div></div></div>
-          <div class="bcard"><div class="bthumb m3"></div><div class="bbody"><span class="btag">Social</span><div class="bline"></div><div class="bline short"></div></div></div>
-          <div class="bcard"><div class="bthumb m4"></div><div class="bbody"><span class="btag">Link</span><div class="bline"></div><div class="bline short"></div></div></div>
-          <div class="bcard"><div class="bthumb m1"></div><div class="bbody"><span class="btag">Social</span><div class="bline"></div><div class="bline short"></div></div></div>
-          <div class="bcard"><div class="bthumb m6"></div><div class="bbody"><span class="btag">Article</span><div class="bline"></div><div class="bline short"></div></div></div>
-        </div>
+        <img
+          class="board-shot"
+          src="app-board.png"
+          width="1280"
+          height="762"
+          alt="Sediment's board for today: four captured links rendered as cards — a GitHub repository, a YouTube video, and two articles — with the history panel listing past days on the right"
+        />
       </div>
-      <figcaption><b>Fig. 1</b> — A single day's deposit. Copied links settle as cards; the day does the filing, so you never have to.</figcaption>
+      <figcaption><b>Fig. 1</b> — A real day's deposit (actual screenshot). Copied links settle as cards; the day does the filing, so you never have to.</figcaption>
     </div>
   </figure>
 
@@ -598,13 +553,6 @@
 </div>
 
 <script>
-  // Board shows the visitor's actual day, like the app does.
-  document.getElementById('board-day').textContent = new Date().toLocaleDateString(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
-
   // ---- depth rail ----
   const TOTAL_DEPTH = 12; // meters, mapped onto full scroll range
   const ticksEl = document.getElementById('rail-ticks');
