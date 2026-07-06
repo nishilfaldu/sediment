@@ -1,15 +1,12 @@
-import { ITEM_TYPES, type ItemType, PLATFORMS, type Platform } from '@shared/types'
+import { ITEM_TYPES, type ItemType } from '@shared/types'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
-export { ITEM_TYPES, type ItemType, PLATFORMS, type Platform }
+export { ITEM_TYPES, type ItemType }
 
 // One row per calendar day that has at least one item.
 // id is an ISO date string: "2026-05-26" (local calendar date, not UTC)
 export const days = sqliteTable('days', {
-  id: text('id').primaryKey(),
-  note: text('note'),
-  createdAt: integer('created_at').notNull(),
-  updatedAt: integer('updated_at').notNull()
+  id: text('id').primaryKey()
 })
 
 export const items = sqliteTable('items', {
@@ -23,9 +20,6 @@ export const items = sqliteTable('items', {
   title: text('title'),
   description: text('description'),
   thumbnail: text('thumbnail'),
-  imagePath: text('image_path'),
-  platform: text('platform').$type<Platform | null>(),
-  metadata: text('metadata'),
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull()
 })

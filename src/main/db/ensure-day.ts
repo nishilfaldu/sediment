@@ -8,6 +8,5 @@ export function ensureDay(dayId: string): void {
   const existing = db.select().from(days).where(eq(days.id, dayId)).get()
   if (existing) return
 
-  const now = Date.now()
-  db.insert(days).values({ id: dayId, createdAt: now, updatedAt: now }).run()
+  db.insert(days).values({ id: dayId }).run()
 }

@@ -1,4 +1,4 @@
-import type { MetadataPatch } from '@shared/contracts'
+import type { OgMetadataPatch } from '@shared/contracts'
 import { load } from 'cheerio'
 import { BrowserWindow } from 'electron'
 import { patchItemMetadata } from './item-metadata'
@@ -29,17 +29,18 @@ function isVimeoUrl(url: string): boolean {
   }
 }
 
-async function fetchTwitterMeta(url: string): Promise<MetadataPatch> {
+const EMPTY: OgMetadataPatch = { title: null, description: null, thumbnail: null }
+
+async function fetchTwitterMeta(url: string): Promise<OgMetadataPatch> {
   const endpoint = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`
   const res = await fetch(endpoint, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Sediment/1.0)' },
     signal: AbortSignal.timeout(8000)
   })
-  if (!res.ok) return { title: null, description: null, thumbnail: null, metadata: null }
+  if (!res.ok) return EMPTY
 
   const data = (await res.json()) as {
     author_name?: string
-    author_url?: string
     html?: string
   }
 
@@ -49,31 +50,28 @@ async function fetchTwitterMeta(url: string): Promise<MetadataPatch> {
   return {
     title: data.author_name ? `@${data.author_name}` : null,
     description: tweetText,
-    thumbnail: null,
-    metadata: data.author_url ? JSON.stringify({ authorUrl: data.author_url }) : null
+    thumbnail: null
   }
 }
 
-async function fetchVimeoMeta(url: string): Promise<MetadataPatch> {
+async function fetchVimeoMeta(url: string): Promise<OgMetadataPatch> {
   const endpoint = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`
   const res = await fetch(endpoint, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Sediment/1.0)' },
     signal: AbortSignal.timeout(8000)
   })
-  if (!res.ok) return { title: null, description: null, thumbnail: null, metadata: null }
+  if (!res.ok) return EMPTY
 
   const data = (await res.json()) as {
     title?: string
     description?: string
     thumbnail_url?: string
-    author_name?: string
   }
 
   return {
     title: data.title ?? null,
     description: data.description ?? null,
-    thumbnail: data.thumbnail_url ?? null,
-    metadata: data.author_name ? JSON.stringify({ authorName: data.author_name }) : null
+    thumbnail: data.thumbnail_url ?? null
   }
 }
 
@@ -81,7 +79,7 @@ function pushUpdate(itemId: string, dayId: string): void {
   BrowserWindow.getAllWindows()[0]?.webContents.send('item:metadataUpdated', { id: itemId, dayId })
 }
 
-export async function fetchUrlMetadata(url: string): Promise<MetadataPatch> {
+export async function fetchUrlMetadata(url: string): Promise<OgMetadataPatch> {
   if (isTwitterUrl(url)) {
     return fetchTwitterMeta(url)
   }
@@ -93,24 +91,17 @@ export async function fetchUrlMetadata(url: string): Promise<MetadataPatch> {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Sediment/1.0)' },
     signal: AbortSignal.timeout(8000)
   })
-  if (!res.ok) {
-    return { title: null, description: null, thumbnail: null, metadata: null }
-  }
+  if (!res.ok) return EMPTY
 
   const html = await res.text()
   const $ = load(html)
 
   const pageTitle = $('title').first().text().trim() || null
-  const title = getMeta($, 'og:title', 'twitter:title') ?? pageTitle
-  const description = getMeta($, 'og:description', 'twitter:description', 'description')
-  const thumbnail = getMeta($, 'og:image', 'twitter:image')
-  const siteName = getMeta($, 'og:site_name')
 
   return {
-    title,
-    description,
-    thumbnail,
-    metadata: siteName ? JSON.stringify({ siteName }) : null
+    title: getMeta($, 'og:title', 'twitter:title') ?? pageTitle,
+    description: getMeta($, 'og:description', 'twitter:description', 'description'),
+    thumbnail: getMeta($, 'og:image', 'twitter:image')
   }
 }
 

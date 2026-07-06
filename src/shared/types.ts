@@ -2,11 +2,58 @@
 // Mirrors src/main/db/schema.ts — kept here so the renderer never imports
 // main-process modules (which transitively pull in better-sqlite3).
 
-export const ITEM_TYPES = ['text', 'image', 'link', 'video', 'social'] as const
+export const ITEM_TYPES = ['text', 'link'] as const
 export type ItemType = (typeof ITEM_TYPES)[number]
 
-export const PLATFORMS = ['youtube', 'vimeo', 'twitter', 'instagram', 'bluesky'] as const
+/** Known hosts for link presentation tags — derived from sourceUrl, not stored. */
+export const PLATFORMS = [
+  'arxiv',
+  'bandcamp',
+  'bluesky',
+  'dailymotion',
+  'devto',
+  'discord',
+  'facebook',
+  'figma',
+  'github',
+  'gitlab',
+  'hackernews',
+  'instagram',
+  'itch',
+  'kick',
+  'lemmy',
+  'linkedin',
+  'mastodon',
+  'medium',
+  'mixcloud',
+  'notion',
+  'npm',
+  'patreon',
+  'pinterest',
+  'producthunt',
+  'pypi',
+  'reddit',
+  'rumble',
+  'snapchat',
+  'soundcloud',
+  'spotify',
+  'stackoverflow',
+  'substack',
+  'telegram',
+  'threads',
+  'tiktok',
+  'tumblr',
+  'twitch',
+  'twitter',
+  'vimeo',
+  'wikipedia',
+  'youtube'
+] as const
 export type Platform = (typeof PLATFORMS)[number]
+
+export interface Day {
+  id: string
+}
 
 export interface Item {
   id: string
@@ -17,16 +64,6 @@ export interface Item {
   title: string | null
   description: string | null
   thumbnail: string | null
-  imagePath: string | null
-  platform: Platform | null
-  metadata: string | null
-  createdAt: number
-  updatedAt: number
-}
-
-export interface Day {
-  id: string
-  note: string | null
   createdAt: number
   updatedAt: number
 }

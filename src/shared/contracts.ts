@@ -1,4 +1,4 @@
-import type { ItemType, Platform } from './types'
+import type { ItemType } from './types'
 
 // Payload the renderer sends when creating or updating an item.
 export interface CreateItemPayload {
@@ -6,16 +6,13 @@ export interface CreateItemPayload {
   type: ItemType
   content?: string | null
   sourceUrl?: string | null
-  platform?: Platform | null
   title?: string | null
   description?: string | null
   thumbnail?: string | null
-  metadata?: string | null
 }
 
-export interface MetadataPatch {
+export interface OgMetadataPatch {
   title: string | null
   description: string | null
   thumbnail: string | null
-  metadata: string | null
 }

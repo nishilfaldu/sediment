@@ -4,7 +4,7 @@ import type { DaySummary } from './day-summary'
 import type { Day, Item, SearchResult } from './types'
 
 export type { ClipboardCapturePayload, ClipboardDuplicatePayload } from './clipboard-capture'
-export type { CreateItemPayload, MetadataPatch } from './contracts'
+export type { CreateItemPayload, OgMetadataPatch } from './contracts'
 export type { DaySummary } from './day-summary'
 
 export interface ExportResult {

@@ -1,4 +1,4 @@
-import type { MetadataPatch } from '@shared/contracts'
+import type { OgMetadataPatch } from '@shared/contracts'
 import { isAwaitingOgMetadata } from '@shared/item-metadata'
 import { eq } from 'drizzle-orm'
 import { getDb } from '../db'
@@ -15,7 +15,7 @@ export function fetchOgIfAwaiting(
   fetch(ids.id, ids.dayId, item.sourceUrl)
 }
 
-export function patchItemMetadata(id: string, meta: MetadataPatch): void {
+export function patchItemMetadata(id: string, meta: OgMetadataPatch): void {
   getDb()
     .update(items)
     .set({ ...meta, updatedAt: Date.now() })

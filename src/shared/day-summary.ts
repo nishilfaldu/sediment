@@ -1,5 +1,4 @@
-import type { Day } from './types'
-
-export interface DaySummary extends Day {
+export interface DaySummary {
+  id: string
   itemCount: number
 }

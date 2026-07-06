@@ -3,7 +3,6 @@ import { nanoid } from 'nanoid'
 import { getDb } from '../db'
 import { ensureDay } from '../db/ensure-day'
 import { type Item, items, type NewItem } from '../db/schema'
-import { saveImageDataUrl } from './image-store'
 import { fetchOgIfAwaiting } from './item-metadata'
 import { fetchOgMetadata } from './og-fetcher'
 
@@ -26,25 +25,12 @@ export function createItemRecord(payload: CreateItemInput): Item {
   const now = Date.now()
   const id = nanoid()
 
-  let content = payload.content ?? null
-  let imagePath: string | null = null
-
-  if (payload.type === 'image' && typeof content === 'string' && content.startsWith('data:')) {
-    try {
-      imagePath = saveImageDataUrl(id, content)
-      content = null
-    } catch {
-      // If the save fails keep the data URL in content as a fallback
-    }
-  }
-
   const item = db
     .insert(items)
     .values({
       ...payload,
       id,
-      content,
-      imagePath,
+      content: payload.content ?? null,
       createdAt: now,
       updatedAt: now
     })

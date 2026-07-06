@@ -1,5 +1,5 @@
 import { workspaceTabForItemType } from '@shared/item-groups'
-import { TYPE_LABELS } from '@shared/labels'
+import { itemTagLabel } from '@shared/labels'
 import type { JSX } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SpecimenTag } from '@/components/ui/specimen-tag'
@@ -160,9 +160,7 @@ export function SearchModal(): JSX.Element | null {
                         isSelected ? 'bg-panel' : ''
                       }`}
                     >
-                      <SpecimenTag className="shrink-0">
-                        {TYPE_LABELS[r.type] ?? r.type}
-                      </SpecimenTag>
+                      <SpecimenTag className="shrink-0">{itemTagLabel(r)}</SpecimenTag>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm text-primary">
                           {primaryText(r)}

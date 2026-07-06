@@ -1,11 +1,9 @@
 import type { Item, ItemType } from './types'
 
-const LINK_ARTIFACT_TYPES = new Set<ItemType>(['link', 'video', 'social', 'image'])
-
 export type WorkspaceTab = 'links' | 'notes'
 
 export function isLinkArtifact(type: ItemType): boolean {
-  return LINK_ARTIFACT_TYPES.has(type)
+  return type === 'link'
 }
 
 export function isNote(type: ItemType): boolean {

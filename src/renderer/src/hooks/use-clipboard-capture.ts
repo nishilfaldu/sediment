@@ -1,5 +1,5 @@
 import type { ClipboardCapturePayload } from '@shared/clipboard-capture'
-import { TYPE_LABELS } from '@shared/labels'
+import { itemTagLabel } from '@shared/labels'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useCurrentDay } from '@/stores/current-day'
@@ -8,7 +8,7 @@ import { useToast } from '@/stores/toast'
 import { useWorkspaceTab } from '@/stores/workspace-tab'
 
 function captureLabel(payload: ClipboardCapturePayload): string {
-  return TYPE_LABELS[payload.type] ?? 'link'
+  return itemTagLabel({ type: 'link', sourceUrl: payload.sourceUrl })
 }
 
 function invalidateDay(qc: ReturnType<typeof useQueryClient>, dayId: string): void {

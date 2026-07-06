@@ -2,17 +2,12 @@ import { join } from 'node:path'
 import { app, BrowserWindow, nativeTheme, shell } from 'electron'
 import { initDb } from './db'
 import { registerAllHandlers } from './ipc'
-import { registerSedimentProtocol, registerSedimentScheme } from './protocol'
 import { registerClipboardWatcher, unregisterClipboardWatcher } from './services/clipboard-watcher'
 import { createTray, destroyTray } from './services/tray'
 import { loadWindowState, manageWindowState } from './services/window-state'
 
 // Module-level handle so the tray (and dock re-activate) can reach the window.
 let mainWindow: BrowserWindow | null = null
-
-// Register the sediment:// scheme before app.ready so Electron treats it as
-// a standard secure origin (required for <img> tags to load from it).
-registerSedimentScheme()
 
 // electron-vite sets NODE_ENV='development' when running via `bun dev` and
 // 'production' in built apps. We can't use app.isPackaged here because `app`
@@ -84,9 +79,6 @@ app.whenReady().then(() => {
 
   // Register all ipcMain.handle channels
   registerAllHandlers()
-
-  // Register the sediment:// protocol handler (must be after app.ready)
-  registerSedimentProtocol()
 
   // In dev: F12 toggles DevTools. In prod: block Cmd/Ctrl+R (accidental reload).
   app.on('browser-window-created', (_, window) => {

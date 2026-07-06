@@ -9,9 +9,6 @@ export function registerDaysHandlers(): void {
     return db
       .select({
         id: days.id,
-        note: days.note,
-        createdAt: days.createdAt,
-        updatedAt: days.updatedAt,
         itemCount: count(items.id)
       })
       .from(days)
@@ -23,11 +20,10 @@ export function registerDaysHandlers(): void {
 
   ipcMain.handle('days:getOrCreate', (_e, dayId: string) => {
     const db = getDb()
-    const now = Date.now()
 
     const existing = db.select().from(days).where(eq(days.id, dayId)).get()
     if (existing) return existing
 
-    return db.insert(days).values({ id: dayId, createdAt: now, updatedAt: now }).returning().get()
+    return db.insert(days).values({ id: dayId }).returning().get()
   })
 }

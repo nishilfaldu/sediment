@@ -1,69 +1,36 @@
-import type { ItemType, Platform } from './types'
-
-export interface DetectedContent {
-  type: ItemType
-  content?: string
-  sourceUrl?: string
-  platform?: Platform
+export interface DetectedText {
+  type: 'text'
+  content: string
 }
 
-export interface UrlDetection {
-  type: Exclude<ItemType, 'text' | 'image'>
+export interface DetectedLink {
+  type: 'link'
   sourceUrl: string
-  platform?: Platform
 }
+
+export type DetectedContent = DetectedText | DetectedLink
 
 /*
- * Classify a string into one of the item types.
- * Runs synchronously — no network access. OG metadata is fetched asynchronously
- * after the item is saved.
+ * Decide whether clipboard/hotkey input is plain text or a URL.
+ * Platform-specific tags (YouTube, X, etc.) are derived at display time
+ * from the URL — not stored on the row.
  */
 export function detectContent(raw: string): DetectedContent {
   const text = raw.trim()
 
-  // Only http/https are recognised — file:// etc. fall through to plain text.
-  let url: URL | null = null
   try {
-    url = new URL(text)
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') url = null
+    const url = new URL(text)
+    if (url.protocol === 'http:' || url.protocol === 'https:') {
+      return { type: 'link', sourceUrl: url.href }
+    }
   } catch {
     // Not a URL — treat as plain text
   }
 
-  if (!url) return { type: 'text', content: text }
-
-  const href = url.href
-  const host = url.hostname.replace(/^www\./, '')
-
-  if (host === 'youtube.com' && url.searchParams.get('v')) {
-    return { type: 'video', sourceUrl: href, platform: 'youtube' }
-  }
-  if (host === 'youtu.be' && url.pathname.length > 1) {
-    return { type: 'video', sourceUrl: href, platform: 'youtube' }
-  }
-  if (host === 'vimeo.com' && /^\/\d+/.test(url.pathname)) {
-    return { type: 'video', sourceUrl: href, platform: 'vimeo' }
-  }
-  if ((host === 'twitter.com' || host === 'x.com') && url.pathname.includes('/status/')) {
-    return { type: 'social', sourceUrl: href, platform: 'twitter' }
-  }
-  if (host === 'instagram.com' && url.pathname.startsWith('/p/')) {
-    return { type: 'social', sourceUrl: href, platform: 'instagram' }
-  }
-  if (host === 'bsky.app' && url.pathname.includes('/post/')) {
-    return { type: 'social', sourceUrl: href, platform: 'bluesky' }
-  }
-
-  return { type: 'link', sourceUrl: href }
+  return { type: 'text', content: text }
 }
 
-// Returns null when the input is plain text (not a URL).
-export function detectUrl(raw: string): UrlDetection | null {
+export function detectUrl(raw: string): DetectedLink | null {
   const detected = detectContent(raw)
-  if (detected.type === 'text' || detected.type === 'image') return null
-  return {
-    type: detected.type,
-    sourceUrl: detected.sourceUrl as string,
-    platform: detected.platform
-  }
+  return detected.type === 'link' ? detected : null
 }

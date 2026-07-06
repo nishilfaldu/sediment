@@ -1,6 +1,8 @@
+import { getLinkPresentation, youtubeVideoId } from '@shared/link-presentation'
 import type { JSX } from 'react'
 import { CardOpenButton } from '@/components/cards/card-open-button'
 import { CardThumbnail } from '@/components/cards/card-thumbnail'
+import { PlayIcon } from '@/components/icons/play-icon'
 import { SpecimenTag } from '@/components/ui/specimen-tag'
 import type { Item } from '@/types'
 
@@ -18,12 +20,34 @@ function domain(url: string): string {
 
 export function LinkCard({ item }: LinkCardProps): JSX.Element {
   const url = item.sourceUrl ?? ''
+  const presentation = url ? getLinkPresentation(url) : { kind: 'link' as const, tagLabel: 'link' }
+  const isVideo = presentation.kind === 'video'
   const hasMeta = Boolean(item.title)
+
+  const ytId = presentation.platform === 'youtube' ? youtubeVideoId(url) : null
+  const thumbnail =
+    item.thumbnail ?? (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null)
+
+  function open(): void {
+    window.open(url, '_blank')
+  }
 
   return (
     <div className="flex flex-col">
-      {item.thumbnail && (
-        <CardThumbnail src={item.thumbnail} badge={<SpecimenTag overlay>Link</SpecimenTag>} />
+      {thumbnail && (
+        <CardThumbnail
+          src={thumbnail}
+          onClick={isVideo ? open : undefined}
+          buttonLabel={isVideo ? `Play on ${presentation.tagLabel}` : undefined}
+          badge={<SpecimenTag overlay>{presentation.tagLabel}</SpecimenTag>}
+          overlay={
+            isVideo ? (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-primary/10">
+                <PlayIcon />
+              </div>
+            ) : undefined
+          }
+        />
       )}
 
       <div className="flex flex-col gap-2 p-4">
@@ -38,7 +62,13 @@ export function LinkCard({ item }: LinkCardProps): JSX.Element {
         )}
 
         <div className="flex items-center justify-between pt-1">
-          <span className="font-mono text-[10.5px] text-muted">{domain(url)}</span>
+          {!thumbnail ? (
+            <SpecimenTag>{presentation.tagLabel}</SpecimenTag>
+          ) : !isVideo ? (
+            <span className="font-mono text-[10.5px] text-muted">{domain(url)}</span>
+          ) : (
+            <span />
+          )}
           <CardOpenButton url={url} />
         </div>
       </div>

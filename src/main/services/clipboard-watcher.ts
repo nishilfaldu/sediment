@@ -1,6 +1,6 @@
 import type { ClipboardCapturePayload } from '@shared/clipboard-capture'
 import { todayId } from '@shared/dates'
-import type { UrlDetection } from '@shared/detect-url'
+import type { DetectedLink } from '@shared/detect-url'
 import { detectUrl } from '@shared/detect-url'
 import { type BrowserWindow, clipboard, ipcMain } from 'electron'
 import { createItemRecord, hasSourceUrlOnDay } from './create-item'
@@ -52,7 +52,7 @@ function notifyDuplicate(win: BrowserWindow, dayId: string, sourceUrl: string): 
 type CaptureResult = 'captured' | 'duplicate' | 'skipped'
 
 function captureUrlToToday(
-  detected: UrlDetection,
+  detected: DetectedLink,
   getWindow: () => BrowserWindow | null
 ): CaptureResult {
   const dayId = todayId()
@@ -70,9 +70,8 @@ function captureUrlToToday(
 
   const item = createItemRecord({
     dayId,
-    type: detected.type,
+    type: 'link',
     sourceUrl: detected.sourceUrl,
-    platform: detected.platform ?? null,
     content: null
   })
 
@@ -82,9 +81,7 @@ function captureUrlToToday(
   notifyCapture(win, {
     id: item.id,
     dayId: item.dayId,
-    type: detected.type,
-    sourceUrl: detected.sourceUrl,
-    platform: detected.platform
+    sourceUrl: detected.sourceUrl
   })
 
   return 'captured'

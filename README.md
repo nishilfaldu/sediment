@@ -39,8 +39,8 @@ over time.
 |---|---|
 | **One board per day** | The app opens to today. Past days are there when you want them, out of the way when you do not. |
 | **Automatic link capture** | Copy a URL anywhere — Sediment watches the clipboard and saves it to today's Links tab. An undo toast appears if you change your mind. |
-| **Links and Notes tabs** | URLs, videos, and social posts live under Links. Plain-text thoughts live under Notes, separate from link artifacts. |
-| **Auto-detected content** | Links, videos, and social posts are recognized automatically from whatever is on the clipboard. |
+| **Links and Notes tabs** | Copied URLs live under Links. Plain-text thoughts live under Notes, separate from link artifacts. |
+| **URL presentation** | Known hosts (YouTube, X, etc.) get specimen tags on the card — derived from the URL at display time, not stored as separate types. |
 | **Rich previews** | Links and posts get titles, descriptions, and thumbnails pulled from their page metadata. |
 | **Grid layout** | Links appear in a responsive card grid. Notes stack in a single column. |
 | **Full-text search** | Search across everything you have ever saved, powered by SQLite FTS (`Cmd+K`). |
@@ -48,12 +48,10 @@ over time.
 
 ### What gets recognized
 
-| Type | Sources |
+| Stored as | Specimen tags (from URL) |
 |---|---|
-| Video | YouTube, Vimeo |
-| Social | X / Twitter, Instagram, Bluesky |
-| Link | any other URL (with fetched page metadata) |
-| Text | notes you add manually on the Notes tab |
+| `link` | **Video:** YouTube, Vimeo, TikTok, Twitch, Dailymotion, Rumble, Kick, Facebook Watch · **Social:** X, Instagram, Bluesky, Threads, Reddit, LinkedIn, Pinterest, Tumblr, Telegram, Discord, Mastodon, Lemmy, Patreon, Snapchat · **Dev & reading:** GitHub, GitLab, Hacker News, Stack Overflow, DEV, Notion, Figma, npm, PyPI, Substack, Medium, Spotify, SoundCloud, arXiv, Wikipedia, Bandcamp, Product Hunt, itch.io · short links (`youtu.be`, `t.co`, `redd.it`, etc.) · anything else shows as **link** |
+| `text` | Notes you add on the Notes tab |
 
 Clipboard capture handles URLs only. Notes are added with the **Add note** button.
 
@@ -63,7 +61,7 @@ Sediment is a macOS desktop app built on Electron, split across two JavaScript
 worlds that talk through a single typed bridge.
 
 - **Main process** (Node.js) owns the OS layer: the SQLite database, clipboard
-  watching, local image storage, and fetching page metadata for links.
+  watching, and fetching page metadata for links.
 - **Renderer process** (React) is all UI. It has no direct Node access; it talks
   to the main process only through a typed `window.api` exposed by the preload
   bridge.

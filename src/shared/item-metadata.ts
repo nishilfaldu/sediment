@@ -1,7 +1,5 @@
 import type { ItemType } from './types'
 
-const OG_FETCH_TYPES = new Set<ItemType>(['link', 'video', 'social'])
-
 export interface OgMetadataItem {
   sourceUrl: string | null
   type: ItemType
@@ -9,7 +7,7 @@ export interface OgMetadataItem {
 }
 
 export function isOgFetchableType(type: ItemType): boolean {
-  return OG_FETCH_TYPES.has(type)
+  return type === 'link'
 }
 
 /** True when the item was saved but OG title/thumbnail has not arrived yet. */
