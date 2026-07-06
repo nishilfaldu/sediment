@@ -11,7 +11,7 @@ export interface DayBoardProps {
 }
 
 const addNoteButtonClass =
-  'rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800'
+  'rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm hover:bg-stone-50'
 
 export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
   const { links, notes, isLoading } = useWorkspaceItems(dayId)
@@ -34,15 +34,13 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-stone-300 dark:text-stone-600">
-        Loading…
-      </div>
+      <div className="flex h-full items-center justify-center text-sm text-stone-300">Loading…</div>
     )
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-auto bg-stone-50/60 dark:bg-stone-950">
-      <div className="relative shrink-0 border-b border-stone-100 bg-white dark:border-stone-800 dark:bg-stone-900">
+    <div className="flex h-full w-full flex-col overflow-auto bg-stone-50/60">
+      <div className="relative shrink-0 border-b border-stone-100 bg-white">
         <WorkspaceTabs active={tab} onChange={handleTabChange} />
         {tab === 'notes' && visibleItems.length > 0 && (
           <button

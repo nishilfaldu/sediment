@@ -33,9 +33,7 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
 
   const shellClass = [
     'group relative outline-none',
-    flash
-      ? 'rounded-xl ring-2 ring-sky-400 ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950'
-      : 'min-w-0',
+    flash ? 'rounded-xl ring-2 ring-sky-400 ring-offset-2 ring-offset-stone-50' : 'min-w-0',
     isRecent ? 'animate-item-enter' : ''
   ]
     .filter(Boolean)
@@ -56,13 +54,13 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
           type="button"
           onClick={onDelete}
           aria-label="Delete"
-          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-stone-400 opacity-0 shadow-sm ring-1 ring-stone-200 transition-opacity hover:text-stone-700 group-hover:opacity-100 group-focus-within:opacity-100 dark:bg-stone-800/90 dark:ring-stone-700 dark:hover:text-stone-200"
+          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-stone-400 opacity-0 shadow-sm ring-1 ring-stone-200 transition-opacity hover:text-stone-700 group-hover:opacity-100 group-focus-within:opacity-100"
         >
           <CloseIcon />
         </button>
 
         {item.type === 'text' ? (
-          <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900">
+          <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-sm">
             <TextBlock
               item={item}
               onSave={onUpdate ?? (() => undefined)}
@@ -71,7 +69,7 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
             />
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-stone-200/80 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-stone-700 dark:bg-stone-900">
+          <div className="overflow-hidden rounded-xl border border-stone-200/80 bg-white shadow-sm transition-shadow hover:shadow-md">
             <ItemCard item={item} />
           </div>
         )}

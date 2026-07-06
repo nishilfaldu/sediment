@@ -41,17 +41,15 @@ export function SocialCard({ item }: SocialCardProps): JSX.Element {
         )}
 
         {item.title ? (
-          <p className="text-sm font-medium leading-snug text-stone-800 line-clamp-3 dark:text-stone-100">
+          <p className="text-sm font-medium leading-snug text-stone-800 line-clamp-3">
             {item.title}
           </p>
         ) : (
-          <p className="text-sm text-stone-400 break-all line-clamp-2 dark:text-stone-500">{url}</p>
+          <p className="text-sm text-stone-400 break-all line-clamp-2">{url}</p>
         )}
 
         {item.description && (
-          <p className="text-xs leading-relaxed text-stone-500 line-clamp-3 dark:text-stone-400">
-            {item.description}
-          </p>
+          <p className="text-xs leading-relaxed text-stone-500 line-clamp-3">{item.description}</p>
         )}
 
         <div className="flex justify-end pt-1">

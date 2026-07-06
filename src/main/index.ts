@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, nativeTheme, shell } from 'electron'
 import { initDb } from './db'
 import { registerAllHandlers } from './ipc'
 import { registerSedimentProtocol, registerSedimentScheme } from './protocol'
@@ -18,6 +18,10 @@ registerSedimentScheme()
 // 'production' in built apps. We can't use app.isPackaged here because `app`
 // is not yet initialised at module evaluation time in Electron 39+.
 const isDev = process.env.NODE_ENV === 'development'
+
+// The UI is light-only; pin the native theme so scrollbars, form controls,
+// and prefers-color-scheme never follow the OS into dark mode.
+nativeTheme.themeSource = 'light'
 
 function createWindow(): void {
   // Restore the last-used size/position (falls back to defaults + centred).

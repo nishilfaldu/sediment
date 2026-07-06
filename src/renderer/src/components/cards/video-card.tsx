@@ -40,7 +40,7 @@ export function VideoCard({ item }: VideoCardProps): JSX.Element {
           onClick={open}
           buttonLabel={`Play on ${label}`}
           badge={
-            <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-stone-600 shadow-sm dark:bg-stone-900/90 dark:text-stone-300">
+            <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-stone-600 shadow-sm">
               {label}
             </span>
           }
@@ -54,16 +54,16 @@ export function VideoCard({ item }: VideoCardProps): JSX.Element {
 
       <div className="flex flex-col gap-2 p-4">
         {item.title ? (
-          <p className="text-sm font-medium leading-snug text-stone-800 line-clamp-2 dark:text-stone-100">
+          <p className="text-sm font-medium leading-snug text-stone-800 line-clamp-2">
             {item.title}
           </p>
         ) : (
-          <p className="text-sm text-stone-400 break-all line-clamp-1 dark:text-stone-500">{url}</p>
+          <p className="text-sm text-stone-400 break-all line-clamp-1">{url}</p>
         )}
 
         <div className="flex items-center justify-between pt-1">
           {!thumbnail && (
-            <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+            <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-500">
               {label}
             </span>
           )}
