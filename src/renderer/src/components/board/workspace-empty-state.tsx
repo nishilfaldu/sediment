@@ -1,5 +1,6 @@
 import type { WorkspaceTab } from '@shared/item-groups'
 import type { JSX } from 'react'
+import { secondaryButtonClass } from '@/lib/ui-classes'
 
 export interface WorkspaceEmptyStateProps {
   tab: WorkspaceTab
@@ -49,11 +50,7 @@ export function WorkspaceEmptyState({ tab, onAddNote }: WorkspaceEmptyStateProps
             Thoughts for this day live here, separate from your links.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onAddNote}
-          className="border border-ui bg-card px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-primary hover:text-primary"
-        >
+        <button type="button" onClick={onAddNote} className={secondaryButtonClass}>
           Add note
         </button>
       </div>

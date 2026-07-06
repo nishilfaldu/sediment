@@ -2,6 +2,7 @@ import { workspaceTabForItemType } from '@shared/item-groups'
 import { TYPE_LABELS } from '@shared/labels'
 import type { JSX } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { SpecimenTag } from '@/components/ui/specimen-tag'
 import { useSearch } from '@/hooks/use-search'
 import { formatDaySidebar } from '@/lib/dates'
 import { useCurrentDay } from '@/stores/current-day'
@@ -121,7 +122,7 @@ export function SearchModal(): JSX.Element | null {
       onClick={close}
     >
       <div
-        className="w-full max-w-xl overflow-hidden border border-primary/30 bg-card shadow-[6px_6px_0_rgba(38,42,34,0.18)]"
+        className="w-full max-w-xl overflow-hidden border border-primary/30 bg-card shadow-modal"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={onKeyDown}
       >
@@ -159,9 +160,9 @@ export function SearchModal(): JSX.Element | null {
                         isSelected ? 'bg-panel' : ''
                       }`}
                     >
-                      <span className="shrink-0 border border-ui bg-card px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-moss">
+                      <SpecimenTag className="shrink-0">
                         {TYPE_LABELS[r.type] ?? r.type}
-                      </span>
+                      </SpecimenTag>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm text-primary">
                           {primaryText(r)}

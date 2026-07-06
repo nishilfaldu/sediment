@@ -2,14 +2,12 @@ import { PLATFORM_LABELS } from '@shared/labels'
 import type { JSX } from 'react'
 import { CardOpenButton } from '@/components/cards/card-open-button'
 import { CardThumbnail } from '@/components/cards/card-thumbnail'
+import { SpecimenTag } from '@/components/ui/specimen-tag'
 import type { Item } from '@/types'
 
 export interface SocialCardProps {
   item: Item
 }
-
-const tagClass =
-  'border border-ui bg-card/95 px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.14em] text-moss'
 
 export function SocialCard({ item }: SocialCardProps): JSX.Element {
   const url = item.sourceUrl ?? ''
@@ -19,13 +17,13 @@ export function SocialCard({ item }: SocialCardProps): JSX.Element {
   return (
     <div className="flex flex-col">
       {item.thumbnail && (
-        <CardThumbnail src={item.thumbnail} badge={<span className={tagClass}>{label}</span>} />
+        <CardThumbnail src={item.thumbnail} badge={<SpecimenTag overlay>{label}</SpecimenTag>} />
       )}
 
       <div className="flex flex-col gap-2 p-4">
         {!item.thumbnail && (
           <div>
-            <span className={`inline-block ${tagClass}`}>{label}</span>
+            <SpecimenTag className="inline-block">{label}</SpecimenTag>
           </div>
         )}
 
@@ -40,7 +38,7 @@ export function SocialCard({ item }: SocialCardProps): JSX.Element {
         )}
 
         <div className="flex justify-end pt-1">
-          <CardOpenButton label="View post" url={url} />
+          <CardOpenButton url={url} />
         </div>
       </div>
     </div>

@@ -10,7 +10,7 @@ export function Toast(): JSX.Element {
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1 pointer-events-none'
       }`}
     >
-      <div className="flex items-center gap-3 bg-primary px-4 py-2 font-mono text-[12px] text-surface shadow-[3px_3px_0_rgba(38,42,34,0.25)]">
+      <div className="flex items-center gap-3 bg-primary px-4 py-2 font-mono text-[12px] text-surface shadow-toast">
         <span>{message}</span>
         {action && (
           <button

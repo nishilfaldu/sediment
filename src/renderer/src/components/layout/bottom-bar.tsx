@@ -28,14 +28,16 @@ export function BottomBar(): JSX.Element {
     <div className="flex h-9 shrink-0 select-none items-center justify-between border-t border-ui bg-surface px-4 font-mono text-[11px] text-muted">
       <span className="text-secondary">{statusLabel}</span>
 
-      <button
-        type="button"
-        onClick={isToday ? undefined : goToToday}
-        className={isToday ? 'cursor-default text-muted' : 'text-secondary hover:text-primary'}
-      >
-        {formatDayHeading(dayId)}
-        {!isToday && <span className="ml-1 text-ghost">↩ today</span>}
-      </button>
+      {isToday ? (
+        <span className="text-muted" aria-hidden="true">
+          &nbsp;
+        </span>
+      ) : (
+        <button type="button" onClick={goToToday} className="text-secondary hover:text-primary">
+          {formatDayHeading(dayId)}
+          <span className="ml-1 text-ghost">↩ today</span>
+        </button>
+      )}
 
       <div className="flex items-center gap-3">
         {(tab === 'links' ? linkCount : noteCount) > 0 && <ExportMenu dayId={dayId} />}

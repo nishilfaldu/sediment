@@ -5,14 +5,12 @@ import { WorkspaceTabs } from '@/components/board/workspace-tabs'
 import { useCreateItem, useDeleteItem, useUpdateItem } from '@/hooks/use-items'
 import { useWorkspaceItems } from '@/hooks/use-workspace-items'
 import { formatDayHeading } from '@/lib/dates'
+import { secondaryButtonClass } from '@/lib/ui-classes'
 import { useWorkspaceTab, type WorkspaceTab } from '@/stores/workspace-tab'
 
 export interface DayBoardProps {
   dayId: string
 }
-
-const addNoteButtonClass =
-  'border border-ui bg-card px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-primary hover:text-primary'
 
 export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
   const { links, notes, isLoading } = useWorkspaceItems(dayId)
@@ -43,20 +41,18 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
 
   return (
     <div className="flex h-full w-full flex-col overflow-auto bg-surface">
-      <div className="relative shrink-0 border-b border-ui bg-surface">
-        <h1 className="pointer-events-none absolute left-24 top-1/2 -translate-y-1/2 select-none font-display text-[19px] font-bold text-primary">
+      <div className="grid shrink-0 grid-cols-[1fr_auto_1fr] items-end gap-4 border-b border-ui bg-surface px-6 pb-4 pt-7">
+        <h1 className="truncate font-display text-[19px] font-bold text-primary">
           {formatDayHeading(dayId)}
         </h1>
         <WorkspaceTabs active={tab} onChange={handleTabChange} />
-        {tab === 'notes' && visibleItems.length > 0 && (
-          <button
-            type="button"
-            onClick={handleAddNote}
-            className={`absolute right-6 top-1/2 -translate-y-1/2 ${addNoteButtonClass}`}
-          >
-            Add note
-          </button>
-        )}
+        <div className="flex justify-end">
+          {tab === 'notes' && visibleItems.length > 0 && (
+            <button type="button" onClick={handleAddNote} className={secondaryButtonClass}>
+              Add note
+            </button>
+          )}
+        </div>
       </div>
 
       {visibleItems.length === 0 ? (

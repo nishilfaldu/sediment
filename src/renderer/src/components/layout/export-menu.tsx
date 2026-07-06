@@ -43,7 +43,7 @@ export function ExportMenu({ dayId }: ExportMenuProps): JSX.Element {
       </button>
 
       {open && (
-        <div className="absolute bottom-full right-0 mb-1.5 min-w-[180px] border border-ui bg-card py-1 font-sans text-secondary shadow-[3px_3px_0_rgba(38,42,34,0.1)]">
+        <div className="absolute bottom-full right-0 mb-1.5 min-w-[180px] border border-ui bg-card py-1 font-sans text-secondary shadow-popover">
           <button
             type="button"
             onClick={copy}

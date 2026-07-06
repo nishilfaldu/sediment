@@ -17,7 +17,7 @@ export function ContextMenu({ x, y, onDelete, onDismiss }: ContextMenuProps): JS
   return (
     <div
       ref={ref}
-      className="fixed z-50 min-w-[120px] border border-ui bg-card py-1 shadow-[3px_3px_0_rgba(38,42,34,0.1)]"
+      className="fixed z-50 min-w-[120px] border border-ui bg-card py-1 shadow-popover"
       style={{ left: x, top: y }}
     >
       <button

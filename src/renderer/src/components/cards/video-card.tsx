@@ -3,6 +3,7 @@ import type { JSX } from 'react'
 import { CardOpenButton } from '@/components/cards/card-open-button'
 import { CardThumbnail } from '@/components/cards/card-thumbnail'
 import { PlayIcon } from '@/components/icons/play-icon'
+import { SpecimenTag } from '@/components/ui/specimen-tag'
 import type { Item } from '@/types'
 
 export interface VideoCardProps {
@@ -39,11 +40,7 @@ export function VideoCard({ item }: VideoCardProps): JSX.Element {
           src={thumbnail}
           onClick={open}
           buttonLabel={`Play on ${label}`}
-          badge={
-            <span className="border border-ui bg-card/95 px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.14em] text-moss">
-              {label}
-            </span>
-          }
+          badge={<SpecimenTag overlay>{label}</SpecimenTag>}
           overlay={
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-primary/10">
               <PlayIcon />
@@ -60,11 +57,7 @@ export function VideoCard({ item }: VideoCardProps): JSX.Element {
         )}
 
         <div className="flex items-center justify-between pt-1">
-          {!thumbnail && (
-            <span className="border border-ui bg-card px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.14em] text-moss">
-              {label}
-            </span>
-          )}
+          {!thumbnail && <SpecimenTag>{label}</SpecimenTag>}
           <div className={thumbnail ? 'ml-auto' : ''}>
             <CardOpenButton url={url} />
           </div>

@@ -60,7 +60,7 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
         </button>
 
         {item.type === 'text' ? (
-          <div className="border border-ui bg-card p-4 shadow-[3px_3px_0_rgba(38,42,34,0.06)]">
+          <div className="border border-ui bg-card p-4 shadow-hard">
             <TextBlock
               item={item}
               onSave={onUpdate ?? (() => undefined)}
@@ -69,7 +69,7 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
             />
           </div>
         ) : (
-          <div className="overflow-hidden border border-ui bg-card shadow-[3px_3px_0_rgba(38,42,34,0.06)] transition-shadow hover:shadow-[5px_5px_0_rgba(38,42,34,0.1)]">
+          <div className="overflow-hidden border border-ui bg-card shadow-hard transition-shadow hover:shadow-hard-hover">
             <ItemCard item={item} />
           </div>
         )}

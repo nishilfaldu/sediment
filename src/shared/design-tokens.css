@@ -1,0 +1,22 @@
+/*
+ * Canonical Sediment field-guide palette. Keep website/tokens.css in sync.
+ * Imported by the renderer via main.css; linked from website/index.html.
+ */
+:root {
+  --sediment-paper: #eaeae3;
+  --sediment-silt: #dddbcf;
+  --sediment-card: #fbfaf7;
+  --sediment-board: #f4f3ee;
+
+  --sediment-ink: #262a22;
+  --sediment-ink-secondary: #565b4e;
+  --sediment-ink-muted: #8b8b7e;
+  --sediment-ink-ghost: #bcbbaf;
+  --sediment-ink-12: rgba(38, 42, 34, 0.14);
+  --sediment-ink-30: rgba(38, 42, 34, 0.28);
+  --sediment-ink-60: rgba(38, 42, 34, 0.6);
+
+  --sediment-ui: rgba(38, 42, 34, 0.16);
+  --sediment-moss: #4e6e58;
+  --sediment-iron: #9c3d22;
+}

@@ -13,7 +13,7 @@ const TABS: { id: WorkspaceTab; label: string }[] = [
 
 export function WorkspaceTabs({ active, onChange }: WorkspaceTabsProps): JSX.Element {
   return (
-    <div className="flex justify-center gap-10 px-6 pb-4 pt-7">
+    <div className="flex justify-center gap-10">
       {TABS.map((tab) => {
         const isActive = tab.id === active
         return (

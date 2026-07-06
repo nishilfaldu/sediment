@@ -1,9 +1,9 @@
 @import "tailwindcss";
+@import "../../../shared/design-tokens.css";
 @import "./base.css";
 
 /* Field-guide typefaces, bundled locally (no network at runtime). */
 @import "@fontsource/besley/700.css";
-@import "@fontsource/besley/900.css";
 @import "@fontsource/archivo/400.css";
 @import "@fontsource/archivo/500.css";
 @import "@fontsource/archivo/600.css";
@@ -22,33 +22,38 @@ a {
 }
 
 /*
- * Semantic tokens for Sediment's field-guide aesthetic (shared with the
- * marketing site): limestone paper, olive-black ink, hairline borders,
- * glauconite green for specimen tags, iron oxide for accents.
- * Change the right-hand values here to retheme the entire app.
+ * Semantic tokens for Sediment's field-guide aesthetic (see src/shared/design-tokens.css).
+ * Change the shared palette there to retheme the app and marketing site together.
  */
 @theme {
-  /* Backgrounds — limestone paper, warm near-white cards */
-  --color-surface: #edece6;
-  --color-panel: #e6e4db;
-  --color-card: #fbfaf7;
+  /* Backgrounds */
+  --color-surface: var(--sediment-paper);
+  --color-panel: var(--sediment-silt);
+  --color-card: var(--sediment-card);
 
-  /* Borders — hairline ink */
-  --color-ui: rgba(38, 42, 34, 0.16);
+  /* Borders */
+  --color-ui: var(--sediment-ui);
 
-  /* Text — olive-black ink ramp */
-  --color-primary: #262a22;
-  --color-secondary: #565b4e;
-  --color-muted: #8b8b7e;
-  --color-ghost: #bcbbaf;
+  /* Text */
+  --color-primary: var(--sediment-ink);
+  --color-secondary: var(--sediment-ink-secondary);
+  --color-muted: var(--sediment-ink-muted);
+  --color-ghost: var(--sediment-ink-ghost);
 
   /* Accent — active day block */
-  --color-accent: #262a22;
-  --color-accent-fg: #edece6;
+  --color-accent: var(--sediment-ink);
+  --color-accent-fg: var(--sediment-paper);
 
   /* Minerals — specimen tags and warnings */
-  --color-moss: #4e6e58;
-  --color-iron: #9c3d22;
+  --color-moss: var(--sediment-moss);
+  --color-iron: var(--sediment-iron);
+
+  /* Hard offset shadows (field-guide print aesthetic) */
+  --shadow-hard: 3px 3px 0 rgb(38 42 34 / 0.06);
+  --shadow-hard-hover: 5px 5px 0 rgb(38 42 34 / 0.1);
+  --shadow-popover: 3px 3px 0 rgb(38 42 34 / 0.1);
+  --shadow-modal: 6px 6px 0 rgb(38 42 34 / 0.18);
+  --shadow-toast: 3px 3px 0 rgb(38 42 34 / 0.25);
 
   /* Typefaces */
   --font-display: "Besley", Georgia, serif;
