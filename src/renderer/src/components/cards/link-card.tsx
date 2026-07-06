@@ -25,7 +25,7 @@ export function LinkCard({ item }: LinkCardProps): JSX.Element {
         <CardThumbnail
           src={item.thumbnail}
           badge={
-            <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-stone-600 shadow-sm">
+            <span className="border border-ui bg-card/95 px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.14em] text-moss">
               Link
             </span>
           }
@@ -34,19 +34,17 @@ export function LinkCard({ item }: LinkCardProps): JSX.Element {
 
       <div className="flex flex-col gap-2 p-4">
         {hasMeta ? (
-          <p className="text-sm font-medium leading-snug text-stone-800 line-clamp-2">
-            {item.title}
-          </p>
+          <p className="text-sm font-medium leading-snug text-primary line-clamp-2">{item.title}</p>
         ) : (
-          <p className="text-sm text-stone-400 break-all line-clamp-2">{url}</p>
+          <p className="text-sm text-muted break-all line-clamp-2">{url}</p>
         )}
 
         {item.description && (
-          <p className="text-xs leading-relaxed text-stone-500 line-clamp-3">{item.description}</p>
+          <p className="text-xs leading-relaxed text-secondary line-clamp-3">{item.description}</p>
         )}
 
         <div className="flex items-center justify-between pt-1">
-          <span className="text-xs text-stone-400">{domain(url)}</span>
+          <span className="font-mono text-[10.5px] text-muted">{domain(url)}</span>
           <CardOpenButton url={url} />
         </div>
       </div>

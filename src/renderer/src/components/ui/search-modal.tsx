@@ -117,11 +117,11 @@ export function SearchModal(): JSX.Element | null {
   return (
     // Backdrop — click anywhere outside the panel to dismiss
     <div
-      className="fixed inset-0 z-[1000] flex items-start justify-center bg-stone-900/20 pt-[12vh]"
+      className="fixed inset-0 z-[1000] flex items-start justify-center bg-primary/20 pt-[12vh]"
       onClick={close}
     >
       <div
-        className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-stone-200"
+        className="w-full max-w-xl overflow-hidden border border-primary/30 bg-card shadow-[6px_6px_0_rgba(38,42,34,0.18)]"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={onKeyDown}
       >
@@ -131,16 +131,16 @@ export function SearchModal(): JSX.Element | null {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search everything…"
-          className="w-full border-b border-stone-100 px-4 py-3 text-base text-stone-800 outline-none placeholder:text-stone-300"
+          className="w-full border-b border-ui bg-card px-4 py-3 text-base text-primary outline-none placeholder:text-ghost"
         />
 
         <div ref={listRef} className="max-h-[50vh] overflow-y-auto">
           {debounced.trim() && results.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-stone-300">No results</div>
+            <div className="px-4 py-8 text-center font-mono text-xs text-ghost">No results</div>
           ) : (
             groups.map(([dayId, dayResults]) => (
               <div key={dayId}>
-                <div className="sticky top-0 bg-stone-50 px-4 py-1.5 text-xs font-medium text-stone-400">
+                <div className="sticky top-0 border-b border-dotted border-ui bg-panel px-4 py-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
                   {formatDaySidebar(dayId)}
                 </div>
                 {dayResults.map((r) => {
@@ -156,18 +156,18 @@ export function SearchModal(): JSX.Element | null {
                       onClick={() => activate(r)}
                       onMouseMove={() => setSelected(index)}
                       className={`flex w-full items-center gap-3 px-4 py-2.5 text-left ${
-                        isSelected ? 'bg-sky-50' : ''
+                        isSelected ? 'bg-panel' : ''
                       }`}
                     >
-                      <span className="shrink-0 rounded bg-stone-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-stone-500">
+                      <span className="shrink-0 border border-ui bg-card px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-moss">
                         {TYPE_LABELS[r.type] ?? r.type}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm text-stone-800">
+                        <span className="block truncate text-sm text-primary">
                           {primaryText(r)}
                         </span>
                         {secondary && (
-                          <span className="block truncate text-xs text-stone-400">{secondary}</span>
+                          <span className="block truncate text-xs text-muted">{secondary}</span>
                         )}
                       </span>
                     </button>

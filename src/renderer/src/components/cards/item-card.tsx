@@ -26,7 +26,7 @@ export function ItemCard({ item }: ItemCardProps): JSX.Element {
     case 'image':
       return <ImageCard item={item} />
     case 'text':
-      return <p className="p-4 text-sm text-stone-400">Unexpected text item in card view</p>
+      return <p className="p-4 text-sm text-muted">Unexpected text item in card view</p>
     default: {
       const _exhaustive: never = item.type
       return _exhaustive

@@ -9,8 +9,8 @@ export interface WorkspaceEmptyStateProps {
 export function WorkspaceEmptyState({ tab, onAddNote }: WorkspaceEmptyStateProps): JSX.Element {
   if (tab === 'links') {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-stone-100 text-stone-400">
+      <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 text-center">
+        <div className="flex h-12 w-12 items-center justify-center border border-ui bg-card text-muted">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path
               d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-.5.5M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l.5-.5"
@@ -20,10 +20,10 @@ export function WorkspaceEmptyState({ tab, onAddNote }: WorkspaceEmptyStateProps
             />
           </svg>
         </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-stone-600">No links yet</p>
-          <p className="max-w-xs text-xs leading-relaxed text-stone-400">
-            Copy a URL from anywhere — it appears here automatically.
+        <div className="space-y-1.5">
+          <p className="font-display text-[15px] font-bold text-primary">Nothing deposited yet</p>
+          <p className="max-w-xs font-mono text-[11px] leading-relaxed text-muted">
+            Copy a URL from anywhere — it settles here automatically.
           </p>
         </div>
       </div>
@@ -31,8 +31,8 @@ export function WorkspaceEmptyState({ tab, onAddNote }: WorkspaceEmptyStateProps
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-stone-100 text-stone-400">
+    <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 text-center">
+      <div className="flex h-12 w-12 items-center justify-center border border-ui bg-card text-muted">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path
             d="M7 8h10M7 12h10M7 16h6"
@@ -43,16 +43,16 @@ export function WorkspaceEmptyState({ tab, onAddNote }: WorkspaceEmptyStateProps
         </svg>
       </div>
       <div className="space-y-3">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-stone-600">No notes yet</p>
-          <p className="max-w-xs text-xs leading-relaxed text-stone-400">
+        <div className="space-y-1.5">
+          <p className="font-display text-[15px] font-bold text-primary">No notes yet</p>
+          <p className="max-w-xs font-mono text-[11px] leading-relaxed text-muted">
             Thoughts for this day live here, separate from your links.
           </p>
         </div>
         <button
           type="button"
           onClick={onAddNote}
-          className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm hover:bg-stone-50"
+          className="border border-ui bg-card px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-primary hover:text-primary"
         >
           Add note
         </button>

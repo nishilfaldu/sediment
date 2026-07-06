@@ -17,12 +17,12 @@ export function ContextMenu({ x, y, onDelete, onDismiss }: ContextMenuProps): JS
   return (
     <div
       ref={ref}
-      className="fixed z-50 min-w-[120px] rounded-lg border border-stone-200 bg-white py-1 shadow-lg"
+      className="fixed z-50 min-w-[120px] border border-ui bg-card py-1 shadow-[3px_3px_0_rgba(38,42,34,0.1)]"
       style={{ left: x, top: y }}
     >
       <button
         type="button"
-        className="w-full px-3 py-1.5 text-left text-sm text-red-500 hover:bg-stone-50"
+        className="w-full px-3 py-1.5 text-left text-sm text-iron hover:bg-panel"
         onClick={onDelete}
       >
         Delete

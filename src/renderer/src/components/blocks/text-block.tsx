@@ -67,7 +67,7 @@ export function TextBlock({
       <div className="flex flex-col gap-2">
         <textarea
           ref={textareaRef}
-          className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-stone-800 placeholder-stone-300 outline-none"
+          className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-primary placeholder-ghost outline-none"
           value={draft}
           placeholder="Write your thoughts…"
           onChange={(e) => {
@@ -78,7 +78,7 @@ export function TextBlock({
           onKeyDown={handleKeyDown}
           rows={1}
         />
-        <p className="text-[11px] text-stone-400">Edited {updatedLabel}</p>
+        <p className="font-mono text-[10.5px] text-muted">Edited {updatedLabel}</p>
       </div>
     )
   }
@@ -86,16 +86,16 @@ export function TextBlock({
   return (
     <div className="flex flex-col gap-2">
       <div
-        className="cursor-text text-[15px] leading-relaxed text-stone-800 select-text"
+        className="cursor-text text-[15px] leading-relaxed text-primary select-text"
         onClick={() => setEditing(true)}
       >
         {item.content ? (
           <p className="whitespace-pre-wrap">{item.content}</p>
         ) : (
-          <p className="text-stone-300">Empty note</p>
+          <p className="text-ghost">Empty note</p>
         )}
       </div>
-      {item.content && <p className="text-[11px] text-stone-400">Edited {updatedLabel}</p>}
+      {item.content && <p className="font-mono text-[10.5px] text-muted">Edited {updatedLabel}</p>}
     </div>
   )
 }

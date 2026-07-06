@@ -13,14 +13,20 @@ export function DayListItem({ day, isActive, onClick }: DayListItemProps): JSX.E
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center justify-between rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
-        isActive
-          ? 'bg-stone-100 font-medium text-stone-900'
-          : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'
+      className={`flex w-full items-baseline justify-between border-b border-dotted border-ui px-4 py-2.5 text-left transition-colors ${
+        isActive ? 'bg-accent text-accent-fg' : 'text-secondary hover:bg-surface hover:text-primary'
       }`}
     >
-      <span>{formatDaySidebar(day.id)}</span>
-      {day.itemCount > 0 && <span className="text-xs text-stone-400">{day.itemCount}</span>}
+      <span className={`text-[13px] ${isActive ? 'font-medium' : ''}`}>
+        {formatDaySidebar(day.id)}
+      </span>
+      {day.itemCount > 0 && (
+        <span
+          className={`font-mono text-[10.5px] ${isActive ? 'text-accent-fg/70' : 'text-muted'}`}
+        >
+          {day.itemCount}
+        </span>
+      )}
     </button>
   )
 }

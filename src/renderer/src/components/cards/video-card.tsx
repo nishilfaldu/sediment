@@ -40,12 +40,12 @@ export function VideoCard({ item }: VideoCardProps): JSX.Element {
           onClick={open}
           buttonLabel={`Play on ${label}`}
           badge={
-            <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-stone-600 shadow-sm">
+            <span className="border border-ui bg-card/95 px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.14em] text-moss">
               {label}
             </span>
           }
           overlay={
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-stone-900/10">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-primary/10">
               <PlayIcon />
             </div>
           }
@@ -54,16 +54,14 @@ export function VideoCard({ item }: VideoCardProps): JSX.Element {
 
       <div className="flex flex-col gap-2 p-4">
         {item.title ? (
-          <p className="text-sm font-medium leading-snug text-stone-800 line-clamp-2">
-            {item.title}
-          </p>
+          <p className="text-sm font-medium leading-snug text-primary line-clamp-2">{item.title}</p>
         ) : (
-          <p className="text-sm text-stone-400 break-all line-clamp-1">{url}</p>
+          <p className="text-sm text-muted break-all line-clamp-1">{url}</p>
         )}
 
         <div className="flex items-center justify-between pt-1">
           {!thumbnail && (
-            <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-500">
+            <span className="border border-ui bg-card px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.14em] text-moss">
               {label}
             </span>
           )}

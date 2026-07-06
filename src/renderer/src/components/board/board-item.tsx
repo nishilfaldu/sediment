@@ -33,7 +33,7 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
 
   const shellClass = [
     'group relative outline-none',
-    flash ? 'rounded-xl ring-2 ring-sky-400 ring-offset-2 ring-offset-stone-50' : 'min-w-0',
+    flash ? 'ring-2 ring-moss ring-offset-2 ring-offset-surface' : 'min-w-0',
     isRecent ? 'animate-item-enter' : ''
   ]
     .filter(Boolean)
@@ -54,13 +54,13 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
           type="button"
           onClick={onDelete}
           aria-label="Delete"
-          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-stone-400 opacity-0 shadow-sm ring-1 ring-stone-200 transition-opacity hover:text-stone-700 group-hover:opacity-100 group-focus-within:opacity-100"
+          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center border border-ui bg-card/95 text-muted opacity-0 transition-opacity hover:border-iron hover:text-iron group-hover:opacity-100 group-focus-within:opacity-100"
         >
           <CloseIcon />
         </button>
 
         {item.type === 'text' ? (
-          <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-sm">
+          <div className="border border-ui bg-card p-4 shadow-[3px_3px_0_rgba(38,42,34,0.06)]">
             <TextBlock
               item={item}
               onSave={onUpdate ?? (() => undefined)}
@@ -69,7 +69,7 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
             />
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-stone-200/80 bg-white shadow-sm transition-shadow hover:shadow-md">
+          <div className="overflow-hidden border border-ui bg-card shadow-[3px_3px_0_rgba(38,42,34,0.06)] transition-shadow hover:shadow-[5px_5px_0_rgba(38,42,34,0.1)]">
             <ItemCard item={item} />
           </div>
         )}

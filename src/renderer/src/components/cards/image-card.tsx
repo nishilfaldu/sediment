@@ -32,7 +32,7 @@ export function ImageCard({ item }: ImageCardProps): JSX.Element {
 
       {lightboxOpen && (
         <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-stone-900/80 p-8"
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-primary/85 p-8"
           onClick={() => setLightboxOpen(false)}
           role="dialog"
           aria-modal="true"
@@ -41,7 +41,7 @@ export function ImageCard({ item }: ImageCardProps): JSX.Element {
           <img
             src={src}
             alt=""
-            className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
+            className="max-h-full max-w-full object-contain shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

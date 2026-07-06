@@ -37,39 +37,39 @@ export function ExportMenu({ dayId }: ExportMenuProps): JSX.Element {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="text-stone-500 transition-colors hover:text-stone-700"
+        className="text-secondary transition-colors hover:text-primary"
       >
         Export day
       </button>
 
       {open && (
-        <div className="absolute bottom-full right-0 mb-1.5 min-w-[180px] rounded-lg border border-stone-200 bg-white py-1 text-stone-600 shadow-lg">
+        <div className="absolute bottom-full right-0 mb-1.5 min-w-[180px] border border-ui bg-card py-1 font-sans text-secondary shadow-[3px_3px_0_rgba(38,42,34,0.1)]">
           <button
             type="button"
             onClick={copy}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-panel"
           >
             Copy as Markdown
           </button>
           <button
             type="button"
             onClick={saveFile}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-panel"
           >
             Save as file…
           </button>
-          <div className="my-1 border-t border-stone-100" />
+          <div className="my-1 border-t border-ui" />
           <button
             type="button"
             onClick={() => openInAi('chatgpt')}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-panel"
           >
             Open in ChatGPT
           </button>
           <button
             type="button"
             onClick={() => openInAi('claude')}
-            className="w-full px-3 py-1.5 text-left text-sm hover:bg-stone-50"
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-panel"
           >
             Open in Claude
           </button>

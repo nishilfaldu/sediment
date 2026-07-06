@@ -15,7 +15,7 @@ export function CardOpenButton({ label = 'Open', url }: CardOpenButtonProps): JS
     <button
       type="button"
       onClick={open}
-      className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+      className="flex items-center gap-1 px-2 py-0.5 font-mono text-[10.5px] text-muted transition-colors hover:text-primary"
     >
       {label} <ExternalLinkIcon />
     </button>

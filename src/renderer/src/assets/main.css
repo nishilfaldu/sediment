@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @import "./base.css";
 
+/* Field-guide typefaces, bundled locally (no network at runtime). */
+@import "@fontsource/besley/700.css";
+@import "@fontsource/besley/900.css";
+@import "@fontsource/archivo/400.css";
+@import "@fontsource/archivo/500.css";
+@import "@fontsource/archivo/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
 /*
  * Suppress native HTML drag of images and links. Without this, dragging an OG
  * thumbnail or a card's link starts a browser drag carrying the image/URL,
@@ -13,28 +22,38 @@ a {
 }
 
 /*
- * Semantic color tokens for Sediment's blank-canvas aesthetic.
- * Everything is white. Borders are barely visible.
+ * Semantic tokens for Sediment's field-guide aesthetic (shared with the
+ * marketing site): limestone paper, olive-black ink, hairline borders,
+ * glauconite green for specimen tags, iron oxide for accents.
  * Change the right-hand values here to retheme the entire app.
  */
 @theme {
-  /* Backgrounds — all white */
-  --color-surface: var(--color-white);
-  --color-panel: var(--color-white);
-  --color-card: var(--color-white);
+  /* Backgrounds — limestone paper, warm near-white cards */
+  --color-surface: #edece6;
+  --color-panel: #e6e4db;
+  --color-card: #fbfaf7;
 
-  /* Borders — very subtle */
-  --color-ui: var(--color-stone-100);
+  /* Borders — hairline ink */
+  --color-ui: rgba(38, 42, 34, 0.16);
 
-  /* Text */
-  --color-primary: var(--color-stone-900);
-  --color-secondary: var(--color-stone-600);
-  --color-muted: var(--color-stone-400);
-  --color-ghost: var(--color-stone-300);
+  /* Text — olive-black ink ramp */
+  --color-primary: #262a22;
+  --color-secondary: #565b4e;
+  --color-muted: #8b8b7e;
+  --color-ghost: #bcbbaf;
 
-  /* Accent — history panel active day */
-  --color-accent: var(--color-stone-900);
-  --color-accent-fg: var(--color-white);
+  /* Accent — active day block */
+  --color-accent: #262a22;
+  --color-accent-fg: #edece6;
+
+  /* Minerals — specimen tags and warnings */
+  --color-moss: #4e6e58;
+  --color-iron: #9c3d22;
+
+  /* Typefaces */
+  --font-display: "Besley", Georgia, serif;
+  --font-sans: "Archivo", -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
 
 @keyframes item-enter {

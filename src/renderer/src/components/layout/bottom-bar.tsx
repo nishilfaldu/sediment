@@ -25,30 +25,28 @@ export function BottomBar(): JSX.Element {
       : formatCount(noteCount, 'note', 'notes')
 
   return (
-    <div className="flex h-9 shrink-0 select-none items-center justify-between border-t border-stone-100 bg-white px-4 text-xs text-stone-400">
-      <span className="text-stone-500">{statusLabel}</span>
+    <div className="flex h-9 shrink-0 select-none items-center justify-between border-t border-ui bg-surface px-4 font-mono text-[11px] text-muted">
+      <span className="text-secondary">{statusLabel}</span>
 
       <button
         type="button"
         onClick={isToday ? undefined : goToToday}
-        className={
-          isToday ? 'cursor-default text-stone-400' : 'text-stone-500 hover:text-stone-700'
-        }
+        className={isToday ? 'cursor-default text-muted' : 'text-secondary hover:text-primary'}
       >
         {formatDayHeading(dayId)}
-        {!isToday && <span className="ml-1 text-stone-300">↩ today</span>}
+        {!isToday && <span className="ml-1 text-ghost">↩ today</span>}
       </button>
 
       <div className="flex items-center gap-3">
         {(tab === 'links' ? linkCount : noteCount) > 0 && <ExportMenu dayId={dayId} />}
         {tab === 'links' && (
-          <span className="hidden text-stone-400 sm:inline">Copy a link to save</span>
+          <span className="hidden text-muted sm:inline">Copy a link to save</span>
         )}
         {!historyOpen && (
           <button
             type="button"
             onClick={toggleHistory}
-            className="flex items-center gap-1 text-stone-500 hover:text-stone-700"
+            className="flex items-center gap-1 text-secondary hover:text-primary"
             aria-label="Open history"
           >
             History

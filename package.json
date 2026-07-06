@@ -1,6 +1,6 @@
 {
   "name": "sediment",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A local-first macOS app that collects everything you save during the day onto one canvas per day.",
   "main": "./out/main/index.mjs",
   "author": "Nishil Faldu",
@@ -23,6 +23,9 @@
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
+    "@fontsource/archivo": "^5.2.8",
+    "@fontsource/besley": "^5.2.8",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
     "@tanstack/react-query": "^5.100.14",
     "better-sqlite3": "^12.10.0",
     "cheerio": "^1.2.0",
