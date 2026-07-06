@@ -75,6 +75,18 @@ bunx drizzle-kit generate  # generate SQL migrations after schema changes
 
 ---
 
+## Website & distribution
+
+- **Marketing site:** single self-contained `website/index.html`, deployed to Vercel
+  (project `sediment`, scope `nishil-faldus-projects`) at **https://getsediment.vercel.app**.
+  Deploy with `vercel deploy --prod --yes` from `website/`. `website/.vercel/` is gitignored.
+- **Releases:** `bun run build:mac` packages dmg + zip for arm64 and x64 into `dist/`
+  (unsigned/un-notarized — `identity: null`, `notarize: false`; no Apple dev cert).
+  Downloads ship via GitHub Releases; the site's Download button points at
+  `releases/latest`. Bump `version` in `package.json` before cutting a release.
+
+---
+
 ## History & planning
 
 - **What was done:** merged PRs on GitHub (`gh pr list --state merged`). PR bodies are the changelog — no local task files.
