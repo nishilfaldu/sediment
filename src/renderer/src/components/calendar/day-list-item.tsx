@@ -1,5 +1,5 @@
-import type { JSX } from 'react'
 import type { DaySummary } from '@shared/day-summary'
+import type { JSX } from 'react'
 import { formatDaySidebar } from '@/lib/dates'
 
 export interface DayListItemProps {

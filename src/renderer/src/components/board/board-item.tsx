@@ -33,7 +33,9 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
 
   const shellClass = [
     'group relative outline-none',
-    flash ? 'rounded-xl ring-2 ring-sky-400 ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950' : 'min-w-0',
+    flash
+      ? 'rounded-xl ring-2 ring-sky-400 ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950'
+      : 'min-w-0',
     isRecent ? 'animate-item-enter' : ''
   ]
     .filter(Boolean)

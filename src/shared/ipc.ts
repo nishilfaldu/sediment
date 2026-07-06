@@ -1,11 +1,11 @@
 import type { ClipboardCapturePayload, ClipboardDuplicatePayload } from './clipboard-capture'
-import type { DaySummary } from './day-summary'
 import type { CreateItemPayload } from './contracts'
+import type { DaySummary } from './day-summary'
 import type { Day, Item, SearchResult } from './types'
 
 export type { ClipboardCapturePayload, ClipboardDuplicatePayload } from './clipboard-capture'
-export type { DaySummary } from './day-summary'
 export type { CreateItemPayload, MetadataPatch } from './contracts'
+export type { DaySummary } from './day-summary'
 
 export interface ExportResult {
   saved: boolean

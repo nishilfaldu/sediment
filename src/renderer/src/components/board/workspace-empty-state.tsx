@@ -1,5 +1,5 @@
-import type { JSX } from 'react'
 import type { WorkspaceTab } from '@shared/item-groups'
+import type { JSX } from 'react'
 
 export interface WorkspaceEmptyStateProps {
   tab: WorkspaceTab

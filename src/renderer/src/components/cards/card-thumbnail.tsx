@@ -17,15 +17,11 @@ export function CardThumbnail({
   buttonLabel,
   overlay
 }: CardThumbnailProps): JSX.Element {
-  const image = (
-    <img src={src} alt={alt} className="h-40 w-full object-cover" loading="lazy" />
-  )
+  const image = <img src={src} alt={alt} className="h-40 w-full object-cover" loading="lazy" />
 
   const content = (
     <>
-      {badge && (
-        <div className="absolute left-3 top-3 z-10">{badge}</div>
-      )}
+      {badge && <div className="absolute left-3 top-3 z-10">{badge}</div>}
       {image}
       {overlay}
     </>

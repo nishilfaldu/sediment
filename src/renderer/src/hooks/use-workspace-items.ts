@@ -4,10 +4,7 @@ import { useItems } from '@/hooks/use-items'
 
 export function useWorkspaceItems(dayId: string) {
   const query = useItems(dayId)
-  const partitioned = useMemo(
-    () => partitionWorkspaceItems(query.data ?? []),
-    [query.data]
-  )
+  const partitioned = useMemo(() => partitionWorkspaceItems(query.data ?? []), [query.data])
 
   return { ...query, ...partitioned }
 }

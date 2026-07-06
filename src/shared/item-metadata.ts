@@ -21,7 +21,10 @@ export function isAwaitingOgMetadata(
   return isOgFetchableType(item.type)
 }
 
-export function needsOgFetch(item: OgMetadataItem, options?: { requireNoTitle?: boolean }): boolean {
+export function needsOgFetch(
+  item: OgMetadataItem,
+  options?: { requireNoTitle?: boolean }
+): boolean {
   if (!item.sourceUrl) return false
   if (options?.requireNoTitle && item.title) return false
   return isOgFetchableType(item.type)

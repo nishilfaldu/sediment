@@ -3,8 +3,8 @@ import { nanoid } from 'nanoid'
 import { getDb } from '../db'
 import { ensureDay } from '../db/ensure-day'
 import { type Item, items, type NewItem } from '../db/schema'
-import { fetchOgIfAwaiting } from './item-metadata'
 import { saveImageDataUrl } from './image-store'
+import { fetchOgIfAwaiting } from './item-metadata'
 import { fetchOgMetadata } from './og-fetcher'
 
 export type CreateItemInput = Omit<NewItem, 'id' | 'createdAt' | 'updatedAt'>

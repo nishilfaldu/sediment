@@ -1,10 +1,10 @@
+import { isAwaitingOgMetadata } from '@shared/item-metadata'
 import type { JSX } from 'react'
+import { CardSkeleton } from '@/components/cards/card-skeleton'
 import { ImageCard } from '@/components/cards/image-card'
 import { LinkCard } from '@/components/cards/link-card'
 import { SocialCard } from '@/components/cards/social-card'
 import { VideoCard } from '@/components/cards/video-card'
-import { CardSkeleton } from '@/components/cards/card-skeleton'
-import { isAwaitingOgMetadata } from '@shared/item-metadata'
 import type { Item } from '@/types'
 
 export interface ItemCardProps {
