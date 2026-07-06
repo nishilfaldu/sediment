@@ -13,26 +13,22 @@ const TABS: { id: WorkspaceTab; label: string }[] = [
 ]
 
 export function WorkspaceTabs({ active, onChange }: WorkspaceTabsProps): JSX.Element {
-  const containerRef = useRef<HTMLDivElement>(null)
   const tabRefs = useRef<Partial<Record<WorkspaceTab, HTMLButtonElement>>>({})
   const [indicator, setIndicator] = useState({ left: 0, width: 0 })
 
   useLayoutEffect(() => {
     const button = tabRefs.current[active]
-    const container = containerRef.current
-    if (!button || !container) return
+    if (!button) return
+    // offsetLeft is already relative to the container (its offsetParent).
     setIndicator({
-      left: button.offsetLeft - container.offsetLeft,
+      left: button.offsetLeft,
       width: button.offsetWidth
     })
   }, [active])
 
   return (
     <div className="flex justify-center px-6 pb-3 pt-5">
-      <div
-        ref={containerRef}
-        className="relative inline-flex rounded-full border border-stone-200/80 bg-white p-1.5 shadow-md"
-      >
+      <div className="relative inline-flex rounded-full border border-stone-200/80 bg-white p-1.5 shadow-md">
         <div
           aria-hidden
           className="pointer-events-none absolute top-1.5 bottom-1.5 rounded-full bg-stone-900 shadow-sm transition-[left,width] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
