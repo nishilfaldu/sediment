@@ -70,7 +70,6 @@ IPC is request/response (`invoke`/`handle`). Events pushed main→renderer (e.g.
 bun dev                    # Electron + renderer with HMR
 bun run check              # Biome lint + format (run before committing)
 bun run typecheck          # tsc across main + renderer
-bunx drizzle-kit generate  # generate SQL migrations after schema changes
 ```
 
 ---
@@ -102,7 +101,7 @@ Non-obvious caveats for running/testing here (headless Linux, not macOS):
 
 - **Running the app:** launch `bun dev` inside a long-lived tmux session (it stays running with HMR). A virtual X display is already available at `DISPLAY=:1`; the app renders there. If no display exists, wrap with `xvfb-run -a`.
 - **Sandbox:** Electron's setuid sandbox fails in this container. Export `ELECTRON_DISABLE_SANDBOX=1` in the shell before `bun dev`, otherwise the window never opens.
-- **Benign startup noise:** `Failed to connect to the bus` (dbus) and `Exiting GPU process ... errors during initialization` are expected in headless mode and do NOT indicate failure — the window still renders and SQLite migrations still run (look for `[db] migration applied: ...` in the logs).
+- **Benign startup noise:** `Failed to connect to the bus` (dbus) and `Exiting GPU process ... errors during initialization` are expected in headless mode and do NOT indicate failure — the window still renders and SQLite schema bootstrap still runs.
 - **Testing link capture:** the main process polls the clipboard for `http(s)` URLs and saves them to today's Links tab automatically. To exercise it end-to-end, set the clipboard (`printf 'https://example.com' | DISPLAY=:1 xclip -selection clipboard`) while the app is running. A toast with **Undo** should appear; the link card lands on the Links grid. OG metadata fetches in the background (needs internet; failures are swallowed and the item still saves).
 - **Lint:** `bun run check` rewrites/formats files in place; use `bun run lint` for a read-only check. There are 2 pre-existing lint warnings (exhaustive-deps) unrelated to setup.
-- **Database:** SQLite lives under Electron's `userData` dir (`sediment.db`, WAL). Migrations in `src/main/db/migrations/*.sql` run automatically on startup; no external DB server.
+- **Database:** SQLite lives under Electron's `userData` dir (`sediment.db`, WAL). `ensure-schema.sql` is applied on startup; no external DB server.

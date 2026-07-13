@@ -74,7 +74,7 @@ app.whenReady().then(() => {
     app.setAppUserModelId('com.sediment')
   }
 
-  // Initialise SQLite and run any pending migrations.
+  // Initialise SQLite and ensure tables/indexes exist.
   try {
     initDb()
   } catch (err) {
