@@ -79,10 +79,12 @@ bun run typecheck          # tsc across main + renderer
 - **Marketing site:** single self-contained `website/index.html`, deployed to Vercel
   (project `sediment`, scope `nishil-faldus-projects`) at **https://getsediment.vercel.app**.
   Deploy with `vercel deploy --prod --yes` from `website/`. `website/.vercel/` is gitignored.
-- **Releases:** `bun run build:mac` packages dmg + zip for arm64 and x64 into `dist/`
-  (unsigned/un-notarized — `identity: null`, `notarize: false`; no Apple dev cert).
-  Downloads ship via GitHub Releases; the site's Download button points at
-  `releases/latest`. Bump `version` in `package.json` before cutting a release.
+- **Releases:** pushing a `v*` tag (e.g. `v1.1.4`) triggers `.github/workflows/release.yml` on
+  `macos-latest`, which builds unsigned dmg + zip for arm64 and x64 and publishes to GitHub
+  Releases (`identity: null`, `notarize: false`). Cut a release by bumping `version` in
+  `package.json`, committing to `master`, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
+  The tag must match `package.json` (with a `v` prefix). Downloads ship via GitHub Releases;
+  the site's Download button points at `releases/latest`.
 
 ---
 
