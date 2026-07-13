@@ -1,3 +1,4 @@
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
@@ -36,12 +37,28 @@ export function getSqlite(): Database.Database {
   return _sqlite
 }
 
+// Renamed migrations — if an older filename is already recorded, stamp the new
+// name without re-running CREATE TABLE (which would fail on upgrade).
+const LEGACY_MIGRATION_ALIASES: Record<string, readonly string[]> = {
+  '0000_schema.sql': ['0000_massive_leper_queen.sql']
+}
+
+function migrationAlreadyApplied(file: string, ran: Set<string>): boolean {
+  if (ran.has(file)) return true
+  const legacyNames = LEGACY_MIGRATION_ALIASES[file]
+  return legacyNames?.some((name) => ran.has(name)) ?? false
+}
+
+function stampMigration(sqlite: Database.Database, file: string): void {
+  sqlite
+    .prepare('INSERT OR IGNORE INTO __migrations (name, ran_at) VALUES (?, ?)')
+    .run(file, new Date().toISOString())
+}
+
 // Runs all *.sql files in the migrations folder in lexicographic order.
 // Drizzle's migrator doesn't support hand-written FTS5 SQL natively,
 // so we use better-sqlite3 directly to execute each file.
 function runMigrations(sqlite: Database.Database): void {
-  const { readdirSync, readFileSync } = require('node:fs') as typeof import('node:fs')
-
   // In development, electron-vite doesn't copy *.sql assets to out/main/, so
   // we read directly from the source tree. In production, the build plugin copies
   // them alongside the compiled JS.
@@ -73,6 +90,13 @@ function runMigrations(sqlite: Database.Database): void {
 
   for (const file of files) {
     if (ran.has(file)) continue
+
+    if (migrationAlreadyApplied(file, ran)) {
+      stampMigration(sqlite, file)
+      ran.add(file)
+      console.log(`[db] migration stamped (legacy): ${file}`)
+      continue
+    }
 
     const sql = readFileSync(join(migrationsDir, file), 'utf8')
 

@@ -1,8 +1,8 @@
-CREATE TABLE `days` (
+CREATE TABLE IF NOT EXISTS `days` (
 	`id` text PRIMARY KEY NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `items` (
+CREATE TABLE IF NOT EXISTS `items` (
 	`id` text PRIMARY KEY NOT NULL,
 	`day_id` text NOT NULL,
 	`type` text NOT NULL,
