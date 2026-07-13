@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
@@ -20,7 +21,7 @@ export function initDb(): void {
   _sqlite = sqlite
   _db = drizzle(sqlite, { schema })
 
-  runMigrations(sqlite)
+  ensureSchema(sqlite)
 }
 
 // Returns the Drizzle ORM instance. Throws if initDb() hasn't been called.
@@ -36,67 +37,25 @@ export function getSqlite(): Database.Database {
   return _sqlite
 }
 
-// Runs all *.sql files in the migrations folder in lexicographic order.
-// Drizzle's migrator doesn't support hand-written FTS5 SQL natively,
-// so we use better-sqlite3 directly to execute each file.
-function runMigrations(sqlite: Database.Database): void {
-  const { readdirSync, readFileSync } = require('node:fs') as typeof import('node:fs')
-
-  // In development, electron-vite doesn't copy *.sql assets to out/main/, so
-  // we read directly from the source tree. In production, the build plugin copies
-  // them alongside the compiled JS.
+// Applies ensure-schema.sql on every startup. Every statement is idempotent
+// (IF NOT EXISTS), so there is no migration ledger or filename tracking.
+function ensureSchema(sqlite: Database.Database): void {
   const isDev = process.env.NODE_ENV === 'development'
-  const migrationsDir = isDev
-    ? join(__dirname, '../../src/main/db/migrations')
-    : join(__dirname, 'migrations')
+  const schemaPath = isDev
+    ? join(__dirname, '../../src/main/db/ensure-schema.sql')
+    : join(__dirname, 'ensure-schema.sql')
 
-  // Track which migrations have already run
-  sqlite
-    .prepare(
-      `CREATE TABLE IF NOT EXISTS __migrations (
-        name TEXT PRIMARY KEY,
-        ran_at TEXT NOT NULL
-      )`
-    )
-    .run()
+  const sql = readFileSync(schemaPath, 'utf8')
+  const statements = sql
+    .split(/;\s*(?:\n|$)/)
+    .map((s) => s.trim())
+    .filter((s) => {
+      if (!s) return false
+      const stripped = s.replace(/--[^\n]*/g, '').trim()
+      return stripped.length > 0
+    })
 
-  const ran = new Set(
-    sqlite
-      .prepare('SELECT name FROM __migrations')
-      .all()
-      .map((r) => (r as { name: string }).name)
-  )
-
-  const files = readdirSync(migrationsDir)
-    .filter((f) => f.endsWith('.sql'))
-    .sort()
-
-  for (const file of files) {
-    if (ran.has(file)) continue
-
-    const sql = readFileSync(join(migrationsDir, file), 'utf8')
-
-    // Split on drizzle-kit's breakpoint marker or blank lines, then skip any
-    // segment that contains only SQL comments (no actual statements to execute).
-    const statements = sql
-      .split(/(?:--> statement-breakpoint|\n{2,})/)
-      .map((s) => s.trim())
-      .filter((s) => {
-        if (!s) return false
-        // Strip -- line comments and check if anything real remains
-        const stripped = s.replace(/--[^\n]*/g, '').trim()
-        return stripped.length > 0
-      })
-
-    sqlite.transaction(() => {
-      for (const stmt of statements) {
-        sqlite.prepare(stmt).run()
-      }
-      sqlite
-        .prepare('INSERT INTO __migrations (name, ran_at) VALUES (?, ?)')
-        .run(file, new Date().toISOString())
-    })()
-
-    console.log(`[db] migration applied: ${file}`)
+  for (const stmt of statements) {
+    sqlite.prepare(stmt).run()
   }
 }

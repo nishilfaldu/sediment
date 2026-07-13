@@ -118,7 +118,6 @@ Other useful scripts:
 ```bash
 bun run check              # Biome lint + format
 bun run typecheck          # tsc across main + renderer
-bunx drizzle-kit generate  # generate a migration after a schema change
 bun run build:mac          # package a macOS build
 ```
 
