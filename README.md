@@ -118,8 +118,11 @@ Other useful scripts:
 ```bash
 bun run check              # Biome lint + format
 bun run typecheck          # tsc across main + renderer
-bun run build:mac          # package a macOS build
+bun run build:mac          # package a macOS build locally
 ```
+
+Releases are automated: bump `version` in `package.json`, commit, then
+`git tag vX.Y.Z && git push origin vX.Y.Z` to trigger the GitHub Action.
 
 ## Status
 
