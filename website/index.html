@@ -261,6 +261,27 @@
     color: rgba(234,234,227,0.85);
   }
   .build-line a { color: #9DB8A4; }
+  .install-steps {
+    margin-top: 28px;
+    max-width: 560px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: rgba(234,234,227,0.55);
+    line-height: 1.65;
+  }
+  .install-steps b { color: rgba(234,234,227,0.9); font-weight: 500; }
+  .install-steps ol { margin: 12px 0 0 1.2em; padding: 0; }
+  .install-steps li { margin-bottom: 10px; }
+  .install-steps code {
+    display: block;
+    margin-top: 6px;
+    padding: 10px 12px;
+    border: 1px solid rgba(234,234,227,0.25);
+    color: rgba(234,234,227,0.85);
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+  .install-note { margin-top: 16px; color: rgba(234,234,227,0.45); font-size: 12px; }
 
   footer.colophon {
     background: var(--ink);
@@ -365,13 +386,18 @@
         <a class="btn" href="https://github.com/nishilfaldu/sediment/releases/latest" target="_blank" rel="noopener">Download</a>
         <a class="btn quiet" href="https://github.com/nishilfaldu/sediment" target="_blank" rel="noopener">GitHub</a>
       </div>
-      <p class="cta-note">macOS 13+ · Apple Silicon &amp; Intel</p>
-      <p class="build-line">
-        Unsigned build — on first launch, right-click <b>Sediment.app</b> → Open.
-        If macOS says the app is &ldquo;damaged&rdquo;, download the latest release
-        (1.1.4+) or run <code>xattr -cr /Applications/Sediment.app</code> once.
-        <a href="https://github.com/nishilfaldu/sediment#running-it-locally" target="_blank" rel="noopener">Build from source</a>.
-      </p>
+      <p class="cta-note">macOS 13+ · Apple Silicon &amp; Intel · DMG install</p>
+      <div class="install-steps">
+        <p><b>First launch blocked?</b> macOS blocks apps that aren&rsquo;t notarized with Apple. After installing:</p>
+        <ol>
+          <li>Open <b>Terminal</b> and paste:
+            <code>curl -fsSL https://raw.githubusercontent.com/nishilfaldu/sediment/master/scripts/macos-install.sh | bash</code>
+          </li>
+          <li>Or: <b>System Settings</b> → <b>Privacy &amp; Security</b> → <b>Open Anyway</b> (appears after the first block)</li>
+          <li>Or: right-click <b>Sediment.app</b> → <b>Open</b> (don&rsquo;t double-click the first time)</li>
+        </ol>
+        <p class="install-note">A notarized build (opens normally) is coming once Apple Developer signing is wired up.</p>
+      </div>
     </div>
   </section>
 

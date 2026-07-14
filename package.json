@@ -19,9 +19,10 @@
     "postinstall": "node node_modules/electron/install.js && electron-builder install-app-deps && electron-rebuild -f -w better-sqlite3",
     "build:unpack": "bun run build && electron-builder --dir",
     "build:win": "bun run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
+    "build:mac": "electron-vite build && electron-builder --mac --config electron-builder.adhoc.yml",
     "build:linux": "electron-vite build && electron-builder --linux",
-    "release:mac": "electron-vite build && electron-builder --mac --publish always"
+    "release:mac": "electron-vite build && electron-builder --mac --publish always --config electron-builder.adhoc.yml",
+    "release:mac:notarized": "electron-vite build && electron-builder --mac --publish always --config electron-builder.notarized.yml"
   },
   "dependencies": {
     "@fontsource/archivo": "^5.2.8",
