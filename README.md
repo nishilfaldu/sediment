@@ -98,8 +98,9 @@ clipboard copy     →    (poll)             →  detect URL → save → push e
 **Website: [getsediment.vercel.app](https://getsediment.vercel.app)**
 
 Grab the latest `.dmg` from [Releases](https://github.com/nishilfaldu/sediment/releases/latest)
-(Apple Silicon and Intel builds). The app isn't notarized with Apple yet, so on
-first launch right-click **Sediment.app** → Open, or run
+(Apple Silicon and Intel builds). The app isn't notarized with Apple yet. On first
+launch, right-click **Sediment.app** → Open. If macOS says the app is "damaged",
+download release 1.1.4 or newer (ad-hoc signed), or run
 `xattr -cr /Applications/Sediment.app` once.
 
 The website lives in [`website/`](website/index.html).

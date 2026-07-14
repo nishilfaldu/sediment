@@ -37,5 +37,13 @@ jobs:
       - name: Build and publish macOS release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: bun run release:mac
+          CSC_FOR_PULL_REQUEST: true
+        run: |
+          # Empty CSC_LINK from the job env breaks ad-hoc signing (identity: "-").
+          unset CSC_LINK
+          bun run release:mac
+
+      - name: Verify code signatures
+        run: |
+          codesign --verify --deep --strict --verbose=2 dist/mac-arm64/Sediment.app
+          codesign --verify --deep --strict --verbose=2 dist/mac/Sediment.app
