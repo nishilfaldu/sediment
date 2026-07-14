@@ -14,7 +14,10 @@ asarUnpack:
   - resources/**
 mac:
   category: public.app-category.productivity
-  identity: null
+  # Ad-hoc sign so Apple Silicon doesn't report the app as "damaged" (identity: null
+  # skips signing entirely). Still requires user approval — not notarized.
+  identity: '-'
+  hardenedRuntime: false
   entitlementsInherit: build/entitlements.mac.plist
   notarize: false
   target:
