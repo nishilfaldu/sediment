@@ -14,25 +14,25 @@ asarUnpack:
   - resources/**
 mac:
   category: public.app-category.productivity
-  # Ad-hoc sign so Apple Silicon doesn't report the app as "damaged" (identity: null
-  # skips signing entirely). Still requires user approval — not notarized.
-  identity: '-'
-  hardenedRuntime: false
   entitlementsInherit: build/entitlements.mac.plist
-  notarize: false
   target:
     - target: dmg
       arch:
         - arm64
         - x64
-    - target: zip
-      arch:
-        - arm64
-        - x64
 dmg:
   artifactName: ${name}-${version}-${arch}.${ext}
+  # Drag-to-Applications layout
+  contents:
+    - x: 130
+      y: 180
+    - x: 410
+      y: 180
+      type: link
+      path: /Applications
 npmRebuild: true
 publish:
   provider: github
   owner: nishilfaldu
   repo: sediment
+  publishAutoUpdate: false

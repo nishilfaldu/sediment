@@ -79,14 +79,13 @@ bun run typecheck          # tsc across main + renderer
 - **Marketing site:** single self-contained `website/index.html`, deployed to Vercel
   (project `sediment`, scope `nishil-faldus-projects`) at **https://getsediment.vercel.app**.
   Deploy with `vercel deploy --prod --yes` from `website/`. `website/.vercel/` is gitignored.
-- **Releases:** pushing a `v*` tag (e.g. `v1.1.4`) triggers `.github/workflows/release.yml` on
-  `macos-latest`, which ad-hoc signs (`identity: '-'`), builds unsigned dmg + zip for
-  arm64 and x64, and publishes to GitHub Releases (`notarize: false`; no Apple dev
-  cert). Do not set `identity: null` — Apple Silicon reports unsigned apps as
-  "damaged". Cut a release by bumping `version` in `package.json`, committing to
-  `master`, then `git tag vX.Y.Z && git push origin vX.Y.Z`. The tag must match
-  `package.json` (with a `v` prefix). Downloads ship via GitHub Releases; the site's
-  Download button points at `releases/latest`.
+- **Releases:** pushing a `v*` tag triggers `.github/workflows/release.yml` on `macos-latest`.
+  With GitHub secrets `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`,
+  `CSC_LINK`, and `CSC_KEY_PASSWORD` set, builds are Developer ID signed and notarized
+  (opens normally). Without those secrets, ad-hoc signing is used and users must bypass
+  Gatekeeper once (`scripts/macos-install.sh` or System Settings → Open Anyway).
+  Ships dmg only (arm64 + x64). Cut a release: bump `version` in `package.json`, commit,
+  `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
 ---
 
