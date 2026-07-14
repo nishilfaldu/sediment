@@ -30,7 +30,7 @@ Enum unions: `as const` arrays in `@shared/types`, union derived with `(typeof A
 
 - Derive `Item` / `NewItem` from `typeof items.$inferSelect` / `$inferInsert` in `schema.ts` — don't hand-write row interfaces on the main side.
 - Drizzle can't express FTS5 `MATCH`. Export `getSqlite()` alongside `getDb()`; use raw SQL only for FTS.
-- Schema bootstrap: `ensure-schema.sql` is applied idempotently on every startup (no migration ledger). Keep it in sync with `schema.ts` when the model changes; delete `sediment.db` in userData to reset locally.
+- Schema bootstrap: `ensure-schema.sql` is applied via `sqlite.exec()` on every startup (no migration ledger). Never split the file on `;` — trigger bodies contain semicolons. Keep in sync with `schema.ts`; delete `sediment.db` in userData to reset locally.
 - Item types in the DB are only `text` and `link`. URL host tags (YouTube, X, etc.) live in `src/shared/link-presentation.ts` and are derived at display time — not stored on the row. `days` is just `id` (ISO date); today with no items is synthesized client-side until the first deposit. After a schema reset, delete `sediment.db` in userData (dev: `~/Library/Application Support/sediment/`, packaged: `.../Sediment/`).
 
 ---

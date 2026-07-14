@@ -46,16 +46,6 @@ function ensureSchema(sqlite: Database.Database): void {
     : join(__dirname, 'ensure-schema.sql')
 
   const sql = readFileSync(schemaPath, 'utf8')
-  const statements = sql
-    .split(/;\s*(?:\n|$)/)
-    .map((s) => s.trim())
-    .filter((s) => {
-      if (!s) return false
-      const stripped = s.replace(/--[^\n]*/g, '').trim()
-      return stripped.length > 0
-    })
-
-  for (const stmt of statements) {
-    sqlite.prepare(stmt).run()
-  }
+  // Run the whole script — splitting on ";" breaks CREATE TRIGGER bodies.
+  sqlite.exec(sql)
 }

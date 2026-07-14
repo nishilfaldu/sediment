@@ -1,6 +1,6 @@
 {
   "name": "sediment",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "A local-first macOS app that collects everything you save during the day onto one canvas per day.",
   "main": "./out/main/index.mjs",
   "author": "Nishil Faldu",
