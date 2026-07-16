@@ -33,12 +33,18 @@ function groupByDay(results: SearchResult[]): [string, SearchResult[]][] {
 
 // Best single line of text to show for a hit.
 function primaryText(r: SearchResult): string {
-  return r.title?.trim() || r.content?.trim() || r.sourceUrl || 'Untitled'
+  if (r.type === 'link') {
+    return r.title?.trim() || r.sourceUrl || 'Untitled'
+  }
+  return r.content?.trim() || r.title?.trim() || 'Untitled'
 }
 
 function secondaryText(r: SearchResult): string | null {
   const primary = primaryText(r)
-  const candidates = [r.description, r.sourceUrl, r.content]
+  const candidates =
+    r.type === 'link'
+      ? [r.content, r.description, r.sourceUrl]
+      : [r.description, r.sourceUrl, r.content]
   for (const c of candidates) {
     const t = c?.trim()
     if (t && t !== primary) return t

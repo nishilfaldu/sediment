@@ -2,6 +2,7 @@ import { registerDaysHandlers } from './days'
 import { registerExportHandlers } from './export'
 import { registerItemsHandlers } from './items'
 import { registerSearchHandlers } from './search'
+import { registerSettingsHandlers } from './settings'
 
 // Call once in app.whenReady() after initDb().
 export function registerAllHandlers(): void {
@@ -9,4 +10,5 @@ export function registerAllHandlers(): void {
   registerItemsHandlers()
   registerSearchHandlers()
   registerExportHandlers()
+  registerSettingsHandlers()
 }

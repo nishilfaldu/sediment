@@ -1,5 +1,5 @@
 import type { ClipboardCapturePayload } from '@shared/clipboard-capture'
-import { itemTagLabel } from '@shared/labels'
+import { BRIEF_TOAST_MS, CAPTURE_TOAST_MS, linkCapturePreview } from '@shared/toast'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useCurrentDay } from '@/stores/current-day'
@@ -7,8 +7,9 @@ import { useRecentItems } from '@/stores/recent-items'
 import { useToast } from '@/stores/toast'
 import { useWorkspaceTab } from '@/stores/workspace-tab'
 
-function captureLabel(payload: ClipboardCapturePayload): string {
-  return itemTagLabel({ type: 'link', sourceUrl: payload.sourceUrl })
+function captureToastMessage(payload: ClipboardCapturePayload): string {
+  const preview = linkCapturePreview(payload.sourceUrl)
+  return `Saved ${preview.tagLabel} · ${preview.detail}`
 }
 
 function invalidateDay(qc: ReturnType<typeof useQueryClient>, dayId: string): void {
@@ -26,8 +27,10 @@ export function useClipboardCapture(): void {
       useRecentItems.getState().markRecent(payload.id)
       invalidateDay(qc, payload.dayId)
 
-      useToast.getState().show(`Saved ${captureLabel(payload)}`, {
-        durationMs: 8000,
+      if (!payload.showInAppToast) return
+
+      useToast.getState().show(captureToastMessage(payload), {
+        durationMs: CAPTURE_TOAST_MS,
         action: {
           label: 'Undo',
           onClick: () => {
@@ -40,13 +43,22 @@ export function useClipboardCapture(): void {
       })
     })
 
-    const unsubDuplicate = window.api.on.clipboardDuplicate(() => {
-      useToast.getState().show('Already saved today', { durationMs: 3000 })
+    const unsubDuplicate = window.api.on.clipboardDuplicate((payload) => {
+      if (!payload.showInAppToast) return
+      const preview = linkCapturePreview(payload.sourceUrl)
+      useToast.getState().show(`Already saved · ${preview.tagLabel}`, {
+        durationMs: BRIEF_TOAST_MS
+      })
+    })
+
+    const unsubUndone = window.api.on.clipboardUndone((payload) => {
+      invalidateDay(qc, payload.dayId)
     })
 
     return () => {
       unsubCapture()
       unsubDuplicate()
+      unsubUndone()
     }
   }, [qc])
 }

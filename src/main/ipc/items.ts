@@ -3,6 +3,7 @@ import { ipcMain } from 'electron'
 import { getDb } from '../db'
 import { items } from '../db/schema'
 import { type CreateItemInput, createItemRecord } from '../services/create-item'
+import { deleteItemRecord } from '../services/delete-item'
 import { fetchOgIfAwaiting } from '../services/item-metadata'
 import { fetchOgMetadata } from '../services/og-fetcher'
 
@@ -30,7 +31,6 @@ export function registerItemsHandlers(): void {
   })
 
   ipcMain.handle('items:delete', (_e, id: string) => {
-    const db = getDb()
-    db.delete(items).where(eq(items.id, id)).run()
+    deleteItemRecord(id)
   })
 }

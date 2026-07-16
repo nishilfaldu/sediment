@@ -16,14 +16,14 @@ export function HistoryPanel(): JSX.Element {
       }`}
     >
       <div className="flex min-w-[13rem] flex-col h-full">
-        <div className="flex shrink-0 items-center justify-between border-b border-ui px-4 pt-4 pb-2.5">
+        <div className="app-drag flex shrink-0 items-center justify-between border-b border-ui px-4 pt-4 pb-2.5">
           <span className="font-mono text-[10px] font-medium tracking-[0.22em] text-muted uppercase">
             History
           </span>
           <button
             type="button"
             onClick={toggleHistory}
-            className="p-0.5 text-ghost hover:text-secondary transition-colors"
+            className="app-no-drag p-0.5 text-ghost hover:text-secondary transition-colors"
             aria-label="Collapse history"
           >
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">

@@ -1,5 +1,11 @@
 import { writeFile } from 'node:fs/promises'
-import { asc, eq } from 'drizzle-orm'
+import {
+  formatDayMarkdown,
+  formatItemsForFriend,
+  formatItemsMarkdown,
+  formatMoodboardLetter
+} from '@shared/share'
+import { asc, eq, inArray } from 'drizzle-orm'
 import { BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron'
 import { getDb } from '../db'
 import { type Item, items } from '../db/schema'
@@ -14,31 +20,24 @@ export type AiProvider = 'chatgpt' | 'claude'
 
 const PROMPT_URL_LIMIT = 4000
 
-function renderMarkdown(dayId: string, rows: Item[]): string {
-  const lines: string[] = [`# Sediment — ${dayId}`, '']
-
-  for (const item of rows) {
-    if (item.type === 'text') {
-      if (item.content?.trim()) lines.push(item.content.trim(), '')
-      continue
-    }
-    const label = item.title?.trim() || item.sourceUrl || 'Link'
-    lines.push(`- [${label}](${item.sourceUrl ?? ''})`)
-    if (item.description?.trim()) lines.push(`  ${item.description.trim()}`)
-    lines.push('')
-  }
-
-  return lines.join('\n')
-}
-
-function getDayMarkdown(dayId: string): string {
-  const rows = getDb()
+function getDayItems(dayId: string): Item[] {
+  return getDb()
     .select()
     .from(items)
     .where(eq(items.dayId, dayId))
     .orderBy(asc(items.createdAt))
     .all()
-  return renderMarkdown(dayId, rows)
+}
+
+function getItemsByIds(ids: string[]): Item[] {
+  if (ids.length === 0) return []
+  const rows = getDb().select().from(items).where(inArray(items.id, ids)).all()
+  const order = new Map(ids.map((id, i) => [id, i]))
+  return rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+}
+
+function getDayMarkdown(dayId: string): string {
+  return formatDayMarkdown(dayId, getDayItems(dayId))
 }
 
 function aiUrl(provider: AiProvider, prompt: string): string {
@@ -75,7 +74,29 @@ export function registerExportHandlers(): void {
     clipboard.writeText(getDayMarkdown(dayId))
   })
 
+  ipcMain.handle('export:copyForFriend', (_e, dayId: string): void => {
+    ignoreNextClipboardWrites()
+    clipboard.writeText(formatMoodboardLetter(dayId, getDayItems(dayId)))
+  })
+
+  ipcMain.handle('export:copyItemsForFriend', (_e, ids: string[]): void => {
+    ignoreNextClipboardWrites()
+    clipboard.writeText(formatItemsForFriend(getItemsByIds(ids)))
+  })
+
+  ipcMain.handle('export:copyItemsMarkdown', (_e, ids: string[]): void => {
+    ignoreNextClipboardWrites()
+    clipboard.writeText(formatItemsMarkdown(getItemsByIds(ids)))
+  })
+
   ipcMain.handle('export:openInAi', (_e, dayId: string, provider: AiProvider): Promise<void> => {
     return shell.openExternal(aiUrl(provider, getDayMarkdown(dayId)))
   })
+
+  ipcMain.handle(
+    'export:openItemsInAi',
+    (_e, ids: string[], provider: AiProvider): Promise<void> => {
+      return shell.openExternal(aiUrl(provider, formatItemsMarkdown(getItemsByIds(ids))))
+    }
+  )
 }

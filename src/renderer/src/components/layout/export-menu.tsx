@@ -1,35 +1,26 @@
 import type { JSX } from 'react'
 import { useRef, useState } from 'react'
 import { useDismiss } from '@/hooks/use-dismiss'
+import { useShareActions } from '@/hooks/use-share-actions'
 import { useToast } from '@/stores/toast'
 
 export interface ExportMenuProps {
   dayId: string
 }
 
-// Bottom-bar "Export day" popover: copy/share the current day for AI or archive.
+// Bottom-bar share/export popover for the current day.
 export function ExportMenu({ dayId }: ExportMenuProps): JSX.Element {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const { show: showToast } = useToast()
+  const showToast = useToast((s) => s.show)
+  const share = useShareActions({ type: 'day', dayId })
 
   useDismiss(ref, () => setOpen(false), open)
-
-  async function copy(): Promise<void> {
-    setOpen(false)
-    await window.api.export.copyMarkdown(dayId)
-    showToast('Copied as Markdown')
-  }
 
   async function saveFile(): Promise<void> {
     setOpen(false)
     const result = await window.api.export.day(dayId)
     if (result.saved) showToast('Exported to Markdown')
-  }
-
-  function openInAi(provider: 'chatgpt' | 'claude'): void {
-    setOpen(false)
-    window.api.export.openInAi(dayId, provider)
   }
 
   return (
@@ -39,21 +30,34 @@ export function ExportMenu({ dayId }: ExportMenuProps): JSX.Element {
         onClick={() => setOpen((o) => !o)}
         className="text-secondary transition-colors hover:text-primary"
       >
-        Export day
+        Share
       </button>
 
       {open && (
-        <div className="absolute bottom-full right-0 mb-1.5 min-w-[180px] border border-ui bg-card py-1 font-sans text-secondary shadow-popover">
+        <div className="absolute bottom-full right-0 mb-1.5 min-w-[200px] border border-ui bg-card py-1 font-sans text-secondary shadow-popover">
           <button
             type="button"
-            onClick={copy}
+            onClick={() => {
+              setOpen(false)
+              void share.copyForFriend()
+            }}
+            className="w-full px-3 py-1.5 text-left text-sm hover:bg-panel"
+          >
+            Copy for a friend
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false)
+              void share.copyMarkdown()
+            }}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-panel"
           >
             Copy as Markdown
           </button>
           <button
             type="button"
-            onClick={saveFile}
+            onClick={() => void saveFile()}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-panel"
           >
             Save as file…
@@ -61,14 +65,20 @@ export function ExportMenu({ dayId }: ExportMenuProps): JSX.Element {
           <div className="my-1 border-t border-ui" />
           <button
             type="button"
-            onClick={() => openInAi('chatgpt')}
+            onClick={() => {
+              setOpen(false)
+              share.openInAi('chatgpt')
+            }}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-panel"
           >
             Open in ChatGPT
           </button>
           <button
             type="button"
-            onClick={() => openInAi('claude')}
+            onClick={() => {
+              setOpen(false)
+              share.openInAi('claude')
+            }}
             className="w-full px-3 py-1.5 text-left text-sm hover:bg-panel"
           >
             Open in Claude
