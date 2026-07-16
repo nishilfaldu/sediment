@@ -1,7 +1,8 @@
-node_modules
-dist
-out
-.drizzle
+.native/
+zig-out/
+.zig-cache/
+node_modules/
+.notes/
 .DS_Store
-.eslintcache
-*.log*
+*.log
+.native-sdk-cli

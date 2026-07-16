@@ -1,110 +1,83 @@
 # Sediment — Technical Documentation for AI Agents
 
-⚠️ **IMPORTANT FOR AI AGENTS:** This file (`CLAUDE.md`) and `AGENTS.md` are clones — keep them in sync on substantial changes (architecture, data flow, IPC patterns, new major features). Skip minor UI/copy edits. When one is updated, mirror immediately.
+⚠️ **IMPORTANT FOR AI AGENTS:** This file (`CLAUDE.md`) and `AGENTS.md` are clones — keep them in sync on substantial changes. Skip minor UI/copy edits.
 
-**Project-specific traps** (not history, not style) are in [`.notes/learnings.md`](.notes/learnings.md) — skim before touching IPC, DB, or Electron.
+**Status:** Electron on `master` is the shipping app. This `native-sdk` branch is an experimental Native SDK port (paused — SDK fetch/image caps block preview parity). When resuming Native work, pull skills with `native skills get ts-core` / `native skills get native-ui` (etc.) rather than vendoring them in-tree.
 
 ---
 
 ## What is Sediment?
 
-A personal content collection desktop app for macOS. Throughout the day you encounter things worth saving — a tweet, an article, a quote, a YouTube video, an image. Instead of bookmarking to a forgotten folder, Sediment gives you **one canvas per day** where everything lands together. Copy anything → `Cmd+Shift+S` → it's saved.
+A personal content collection desktop app for macOS. Throughout the day you encounter things worth saving — a tweet, an article, a quote, a YouTube video. Instead of bookmarking to a forgotten folder, Sediment gives you **one canvas per day** where everything lands together. Copy a link → it is saved. Add a note when you need one.
 
 ---
 
-## User Experience Philosophy
-
-- **Zero friction capture:** hotkey saves from anywhere, no app switching
-- **One day, one canvas:** opens to today; past days accessible but out of the way
-- **Auto-everything:** type detected, previews fetched, layout arranged automatically
-- **Local-first:** nothing leaves the device
-
----
-
-## Tech Stack
+## Tech stack (Native SDK)
 
 | Layer | Choice |
 |---|---|
-| Desktop shell | Electron 39 via electron-vite |
-| UI | React 19 + TypeScript |
-| Styling | Tailwind CSS v4 (`@tailwindcss/vite`, no config file) |
-| Database | SQLite via `better-sqlite3` (main process only) |
-| ORM | Drizzle ORM + drizzle-kit |
-| Renderer state | TanStack Query v5 (server state) + Zustand v5 (UI state) |
-| Canvas layout | Freeform absolute positioning with custom pointer drag |
-| OG metadata | cheerio (main process only) |
-| Lint + format | Biome (replaces ESLint + Prettier) |
-| Package manager | Bun |
+| Toolkit | [Native SDK](https://native-sdk.dev/) via `@native-sdk/cli` |
+| Logic | TypeScript app-core (`src/core.ts` + modules), compiled to native (no JS in the binary) |
+| UI | Native markup (`src/app.native`) |
+| Manifest | `app.zon` |
+| Persistence | `Cmd.readFile` / `Cmd.writeFile` under `~/Library/Application Support/Sediment/` |
+| Capture | Clipboard polling via `Sub.timer` + `Cmd.clipboardRead` |
+| Previews | `Cmd.fetch` + OG/meta parse (`src/og.ts`); YouTube uses oEmbed + `hqdefault`; GitHub uses JSON accept + resized opengraph (256 KiB fetch / 512² registry caps); thumbs register only on decode success |
+
+There is **no Electron, React, SQLite, or Node runtime** in the shipped binary. Master (`master` branch) still has the previous Electron implementation for behavioral reference — use `git show master:<path>` when porting behavior.
 
 ---
 
 ## Architecture
 
-Three JS environments plus a shared contract layer — understanding the boundaries is critical.
-
-### Shared (`src/shared/`)
-Pure TypeScript modules imported by main, preload, and renderer: IPC types (`Api`, `CreateItemPayload`), domain types (`Item`, `ItemType`), URL detection (`detectContent`), and labels. Keeps the IPC contract typed without the renderer importing main-process modules.
-
-### Main Process (`src/main/`)
-Node.js. Owns the OS layer: SQLite, filesystem (`userData/images/`), clipboard watching, OG fetching, all `ipcMain.handle` registrations. Think of it as the backend.
-
-### Renderer Process (`src/renderer/`)
-Chromium + React. All UI. No direct Node.js access — talks to main exclusively through the preload bridge.
-
-### Preload (`src/preload/`)
-Exposes a typed `window.api` object via `contextBridge`. The **only** channel between renderer and main. Shape typed via `@shared/ipc`.
-
 ```
-Renderer (React)        Preload               Main (Node.js)
-window.api.items   →    ipcRenderer.invoke →  ipcMain.handle → DB query
-  .getByDay(dayId)  ←   Promise resolves   ←  returns rows
+src/core.ts     Model, Msg, update, subscriptions, binding helpers
+src/derive.ts   Board/history/search view projections over Model
+src/images.ts   Canvas ImageId slot allocation (1..15)
+src/previews.ts Thumbnail queue helpers (enqueue / warm / OG thumb URL)
+src/app.native  Entire UI (field-guide shell: board left, history right)
+src/theme.zig   Sediment paper/ink/moss DesignTokens + Archivo/Plex/Besley ids
+src/wire.zig    App-owned TsUiApp wiring — tokens, fonts, thumb image register
+assets/fonts/   Bundled field-guide TTFs (staged into `.native/gen/fonts/`)
+src/store.ts    Encode/decode durable item store
+src/detect.ts   URL detection + path/query helpers
+src/tags.ts     Link specimen tags, video hosts, meta/thumb URL policy
+src/og.ts       Open Graph / title extraction from HTML bytes
+src/bytes.ts    Byte helpers (concat, decimal, search)
+build.zig       Ejected graph: stages wire+theme into `.native/gen/`, transpiles core
+app.zon         Identity, window, permissions (clipboard, network)
 ```
 
-IPC is request/response (`invoke`/`handle`). Events pushed main→renderer (e.g. clipboard hotkey) use `webContents.send` / `ipcRenderer.on`.
+Loop: events → messages → `update` → model → markup bindings. Effects are `Cmd` data; recurring clipboard polls are `Sub` data.
+
+**Theming:** Stock TS apps only get `app.zon` `theme` / `theme_accent`. Sediment needs the full field-guide palette + faces, so `build.zig` stages `src/wire.zig` (not the SDK’s `ts_core_main`) with static `tokens` from `src/theme.zig` and embeds `assets/fonts/` (Archivo, IBM Plex Mono, Besley). OG thumbnails register via a wrapped `update_fx` (`fx.registerImageBytes` — failures become `thumb_err`, never blank avatars) and render as rectangular `<avatar radius="sm">` covers. Image slots rotate 1..15 with eviction. Do not add `src/main.zig` alongside `src/core.ts`.
 
 ---
 
-## Development Commands
+## Development commands
 
 ```bash
-bun dev                    # Electron + renderer with HMR
-bun run check              # Biome lint + format (run before committing)
-bun run typecheck          # tsc across main + renderer
+native check          # subset-check core + validate markup + app.zon
+native dev --core     # logic loop under node (JSON-line messages)
+native dev            # real window, markup hot reload
+native build          # ReleaseFast binary → zig-out/bin/
+native test           # app tests
+bun scripts/roundtrip.mts   # store encode/decode + OG parse checks
+native skills list    # agent skill catalog from the CLI
 ```
+
+Requires Node.js 22.15+ (transpiler at build time) and Zig 0.16 (CLI downloads if needed).
 
 ---
 
 ## Website & distribution
 
-- **Marketing site:** single self-contained `website/index.html`, deployed to Vercel
-  (project `sediment`, scope `nishil-faldus-projects`) at **https://getsediment.vercel.app**.
-  Deploy with `vercel deploy --prod --yes` from `website/`. `website/.vercel/` is gitignored.
-- **Releases:** pushing a `v*` tag triggers `.github/workflows/release.yml` on `macos-latest`.
-  With GitHub secrets `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`,
-  `CSC_LINK`, and `CSC_KEY_PASSWORD` set, builds are Developer ID signed and notarized
-  (opens normally). Without those secrets, ad-hoc signing is used and users must bypass
-  Gatekeeper once (`scripts/macos-install.sh` or System Settings → Open Anyway).
-  Ships dmg only (arm64 + x64). Cut a release: bump `version` in `package.json`, commit,
-  `git tag vX.Y.Z && git push origin vX.Y.Z`.
+- Marketing site: `website/` → https://getsediment.vercel.app
+- Packaging: `native package` (see Native SDK Packaging docs)
 
 ---
 
-## History & planning
+## History
 
-- **What was done:** merged PRs on GitHub (`gh pr list --state merged`). PR bodies are the changelog — no local task files.
-- **Future work / bugs:** GitHub Issues, only when something needs tracking outside a PR.
-
----
-
-## Cursor Cloud specific instructions
-
-Sediment is a single Electron desktop app (main + preload + renderer). Standard commands live in the **Development Commands** section above and in `package.json` scripts. The dependency-refresh step (`bun install`, which runs the `postinstall` native rebuild of `better-sqlite3` against Electron's ABI) is handled by the startup update script — you do not need to run it manually.
-
-Non-obvious caveats for running/testing here (headless Linux, not macOS):
-
-- **Running the app:** launch `bun dev` inside a long-lived tmux session (it stays running with HMR). A virtual X display is already available at `DISPLAY=:1`; the app renders there. If no display exists, wrap with `xvfb-run -a`.
-- **Sandbox:** Electron's setuid sandbox fails in this container. Export `ELECTRON_DISABLE_SANDBOX=1` in the shell before `bun dev`, otherwise the window never opens.
-- **Benign startup noise:** `Failed to connect to the bus` (dbus) and `Exiting GPU process ... errors during initialization` are expected in headless mode and do NOT indicate failure — the window still renders and SQLite schema bootstrap still runs.
-- **Testing link capture:** the main process polls the clipboard for `http(s)` URLs and saves them to today's Links tab automatically. To exercise it end-to-end, set the clipboard (`printf 'https://example.com' | DISPLAY=:1 xclip -selection clipboard`) while the app is running. A toast with **Undo** should appear; the link card lands on the Links grid. OG metadata fetches in the background (needs internet; failures are swallowed and the item still saves).
-- **Lint:** `bun run check` rewrites/formats files in place; use `bun run lint` for a read-only check. There are 2 pre-existing lint warnings (exhaustive-deps) unrelated to setup.
-- **Database:** SQLite lives under Electron's `userData` dir (`sediment.db`, WAL). `ensure-schema.sql` is applied on startup; no external DB server.
+- Electron era: `master` branch / merged PRs
+- Native SDK rewrite: this branch (`native-sdk`)

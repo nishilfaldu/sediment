@@ -1,5 +1,0 @@
-extends: electron-builder.yml
-mac:
-  hardenedRuntime: true
-  notarize: true
-  # Developer ID identity comes from CSC_LINK in CI

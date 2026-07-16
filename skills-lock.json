@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "native-sdk": {
+      "source": "/Users/happyhome/.nvm/versions/node/v25.9.0/lib/node_modules/@native-sdk/cli",
+      "sourceType": "local",
+      "computedHash": "c54cf98cdea259ddf0a24814a9c50095c26f445d44519c411271c4380dbf687f"
+    }
+  }
+}
