@@ -97,7 +97,7 @@ export function SearchModal(): JSX.Element | null {
 
   function activate(r: SearchResult): void {
     setTab(r.dayId, workspaceTabForItemType(r.type))
-    goToItem(r.dayId, r.id)
+    goToItem(r.dayId, r._id)
     close()
   }
 
@@ -157,7 +157,7 @@ export function SearchModal(): JSX.Element | null {
                   const secondary = secondaryText(r)
                   return (
                     <button
-                      key={r.id}
+                      key={r._id}
                       type="button"
                       data-index={index}
                       onClick={() => activate(r)}

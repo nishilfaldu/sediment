@@ -63,11 +63,6 @@ WebSocket does this in a ~60-line script — no puppeteer needed. Gotchas:
 top-level `const` in `Runtime.evaluate` persists across calls (wrap in IIFE);
 clipboard capture is exercised end-to-end with `pbcopy` while the app runs.
 
-**Website screenshot** (`website/app-board.png`): capture the board with
-`Page.captureScreenshot` (format `png`, omit background if you want transparency),
-save at 2× (2560×1524), then optimize (`cwebp` → `app-board.webp`, `oxipng` on
-the PNG). Keep `src/shared/design-tokens.css` and `website/tokens.css` in sync.
-
 Packaged app paths: `dist/mac-arm64/Sediment.app` (Apple Silicon) or
 `dist/mac/Sediment.app` (Intel). Launch either with `--remote-debugging-port=9222`.
 

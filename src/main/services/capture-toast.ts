@@ -2,7 +2,6 @@ import { join } from 'node:path'
 import type { CaptureToastShow } from '@shared/clipboard-capture'
 import { BRIEF_TOAST_MS, CAPTURE_TOAST_MS, linkCapturePreview } from '@shared/toast'
 import { BrowserWindow, ipcMain, screen } from 'electron'
-import { deleteItemRecord } from './delete-item'
 
 const isDev = process.env.NODE_ENV === 'development'
 const TOAST_WIDTH = 420
@@ -98,12 +97,6 @@ function ensureToastWindow(): BrowserWindow {
   return win
 }
 
-function notifyMainInvalidated(dayId: string): void {
-  const main = deps?.getMainWindow()
-  if (!main || main.isDestroyed()) return
-  main.webContents.send('clipboard:undone', { dayId })
-}
-
 function hideToast(): void {
   clearDismissTimer()
   pendingUndo = null
@@ -168,9 +161,11 @@ export function registerCaptureToast(nextDeps: CaptureToastDeps): void {
     hideToast()
     if (!pending || !suppress) return
 
-    deleteItemRecord(pending.id)
     suppress(pending.sourceUrl)
-    notifyMainInvalidated(pending.dayId)
+    const main = deps?.getMainWindow()
+    if (main && !main.isDestroyed()) {
+      main.webContents.send('clipboard:undo-request', pending)
+    }
   })
 
   ipcMain.handle('capture-toast:dismiss', () => {
@@ -183,6 +178,17 @@ export function registerCaptureToast(nextDeps: CaptureToastDeps): void {
     const queued = queuedShow
     queuedShow = null
     if (queued) deliverShow(toastWindow, queued)
+  })
+
+  ipcMain.handle(
+    'capture-toast:showOverlay',
+    (_e, payload: { id: string; dayId: string; sourceUrl: string }) => {
+      showCaptureOverlay(payload)
+    }
+  )
+
+  ipcMain.handle('capture-toast:showDuplicateOverlay', (_e, sourceUrl: string) => {
+    showDuplicateOverlay(sourceUrl)
   })
 }
 
@@ -203,6 +209,8 @@ export function destroyCaptureToast(): void {
     ipcMain.removeHandler('capture-toast:undo')
     ipcMain.removeHandler('capture-toast:dismiss')
     ipcMain.removeHandler('capture-toast:ready')
+    ipcMain.removeHandler('capture-toast:showOverlay')
+    ipcMain.removeHandler('capture-toast:showDuplicateOverlay')
     handlersRegistered = false
   }
   deps = null

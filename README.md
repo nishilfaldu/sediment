@@ -95,11 +95,10 @@ clipboard copy     →    (poll)             →  detect URL → save → push e
 
 ## Download
 
-**Website: [getsediment.vercel.app](https://getsediment.vercel.app)**
+**Page: [nishilfaldu.site/projects/sediment](https://nishilfaldu.site/projects/sediment)**
 
-Grab the latest `.dmg` from [Releases](https://github.com/nishilfaldu/sediment/releases/latest)
-(Apple Silicon and Intel DMGs). The app isn't notarized with Apple yet, so macOS may
-block the first launch with a malware warning. After dragging to Applications, run:
+Or grab the latest `.dmg` from [Releases](https://github.com/nishilfaldu/sediment/releases/latest)
+(Apple Silicon and Intel DMGs). If Gatekeeper blocks the first launch, run:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nishilfaldu/sediment/master/scripts/macos-install.sh | bash
@@ -107,8 +106,6 @@ curl -fsSL https://raw.githubusercontent.com/nishilfaldu/sediment/master/scripts
 
 Or use **System Settings → Privacy & Security → Open Anyway**, or right-click
 **Sediment.app → Open** (don't double-click the first time).
-
-The website lives in [`website/`](website/index.html).
 
 ## Running it locally
 

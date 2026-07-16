@@ -20,9 +20,9 @@ export function BoardItem({
   autoFocus
 }: BoardItemProps): JSX.Element {
   const elementRef = useRef<HTMLDivElement>(null)
-  const { flash, isRecent } = useBoardItemHighlight(item.id, elementRef)
+  const { flash, isRecent } = useBoardItemHighlight(item._id, elementRef)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
-  const share = useShareActions({ type: 'items', ids: [item.id] })
+  const share = useShareActions({ type: 'items', ids: [item._id] })
 
   function handleContextMenu(e: React.MouseEvent): void {
     e.preventDefault()
@@ -119,7 +119,7 @@ export function BoardItem({
     <>
       <div
         ref={elementRef}
-        data-item-id={item.id}
+        data-item-id={item._id}
         // biome-ignore lint/a11y/noNoninteractiveTabindex: focusable for keyboard delete
         tabIndex={0}
         className={shellClass}

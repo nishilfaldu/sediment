@@ -1,6 +1,6 @@
 # Sediment — Technical Documentation for AI Agents
 
-⚠️ **IMPORTANT FOR AI AGENTS:** This file (`CLAUDE.md`) and `AGENTS.md` are clones — keep them in sync on substantial changes (architecture, data flow, IPC patterns, new major features). Skip minor UI/copy edits. When one is updated, mirror immediately.
+⚠️ **IMPORTANT FOR AI AGENTS:** This file (`AGENTS.md`) is the single source of truth for project guidance. `CLAUDE.md` only points here — do not mirror content into it.
 
 **Project-specific traps** (not history, not style) are in [`.notes/learnings.md`](.notes/learnings.md) — skim before touching IPC, DB, or Electron.
 
@@ -17,7 +17,7 @@ A personal content collection desktop app for macOS. Throughout the day you enco
 - **Zero friction capture:** hotkey saves from anywhere, no app switching
 - **One day, one canvas:** opens to today; past days accessible but out of the way
 - **Auto-everything:** type detected, previews fetched, layout arranged automatically
-- **Local-first:** nothing leaves the device
+- **Cloud-synced:** data lives in Convex so the same account works across devices (web later)
 
 ---
 
@@ -28,11 +28,10 @@ A personal content collection desktop app for macOS. Throughout the day you enco
 | Desktop shell | Electron 39 via electron-vite |
 | UI | React 19 + TypeScript |
 | Styling | Tailwind CSS v4 (`@tailwindcss/vite`, no config file) |
-| Database | SQLite via `better-sqlite3` (main process only) |
-| ORM | Drizzle ORM + drizzle-kit |
-| Renderer state | TanStack Query v5 (server state) + Zustand v5 (UI state) |
+| Backend / DB | Convex (cloud) + Convex Auth (Resend email OTP) |
+| Renderer data | Convex React hooks (`useQuery` / `useMutation`) + Zustand v5 (UI state) |
 | Canvas layout | Freeform absolute positioning with custom pointer drag |
-| OG metadata | cheerio (main process only) |
+| OG metadata | Convex Node action (`convex/og.ts`) via cheerio |
 | Lint + format | Biome (replaces ESLint + Prettier) |
 | Package manager | Bun |
 
@@ -40,45 +39,52 @@ A personal content collection desktop app for macOS. Throughout the day you enco
 
 ## Architecture
 
-Three JS environments plus a shared contract layer — understanding the boundaries is critical.
+Three JS environments plus Convex and a shared contract layer.
 
 ### Shared (`src/shared/`)
-Pure TypeScript modules imported by main, preload, and renderer: IPC types (`Api`, `CreateItemPayload`), domain types (`Item`, `ItemType`), URL detection (`detectContent`), and labels. Keeps the IPC contract typed without the renderer importing main-process modules.
+Pure TypeScript modules imported by main, preload, and renderer: IPC types (`Api`), domain types (`Item`, `ItemType`), URL detection, labels, and share formatters.
+
+### Convex (`convex/`)
+Source of truth for items and auth. Renderer talks to Convex directly. Day boards are derived from each item's `dayId` string (no separate days table). Schema includes `authTables` plus `items`.
 
 ### Main Process (`src/main/`)
-Node.js. Owns the OS layer: SQLite, filesystem (`userData/images/`), clipboard watching, OG fetching, all `ipcMain.handle` registrations. Think of it as the backend.
+Node.js OS layer only: clipboard watching, global hotkey, capture toast window, export save-dialog / clipboard write / `shell.openExternal`, local settings JSON. Does **not** own item CRUD anymore.
 
 ### Renderer Process (`src/renderer/`)
-Chromium + React. All UI. No direct Node.js access — talks to main exclusively through the preload bridge.
+React UI + Convex client (`ConvexAuthProvider`). Sign-in gate, then canvas. Clipboard capture: main detects URL → `clipboard:candidate` → renderer creates via Convex.
 
 ### Preload (`src/preload/`)
-Exposes a typed `window.api` object via `contextBridge`. The **only** channel between renderer and main. Shape typed via `@shared/ipc`.
+Exposes typed `window.api` for OS concerns (settings, clipboard suppress, export helpers, toast). Not used for item/day CRUD.
 
 ```
-Renderer (React)        Preload               Main (Node.js)
-window.api.items   →    ipcRenderer.invoke →  ipcMain.handle → DB query
-  .getByDay(dayId)  ←   Promise resolves   ←  returns rows
+Renderer (React)  →  Convex queries/mutations  →  cloud DB
+Main (clipboard)  →  clipboard:candidate event  →  Renderer creates item
 ```
-
-IPC is request/response (`invoke`/`handle`). Events pushed main→renderer (e.g. clipboard hotkey) use `webContents.send` / `ipcRenderer.on`.
 
 ---
 
 ## Development Commands
 
 ```bash
+bunx convex dev            # link project, codegen, push functions (first-time setup)
+bunx @convex-dev/auth      # JWT keys + SITE_URL for Convex Auth
+bunx convex env set AUTH_RESEND_KEY <key>   # Resend API key for email OTP
+bun run dev:convex         # watch Convex
 bun dev                    # Electron + renderer with HMR
+bun run dev:all            # convex dev --start electron-vite
 bun run check              # Biome lint + format (run before committing)
 bun run typecheck          # tsc across main + renderer
 ```
+
+Requires `VITE_CONVEX_URL` in `.env.local` (written by `convex dev`) and `AUTH_RESEND_KEY` on the Convex deployment.
 
 ---
 
 ## Website & distribution
 
-- **Marketing site:** single self-contained `website/index.html`, deployed to Vercel
-  (project `sediment`, scope `nishil-faldus-projects`) at **https://getsediment.vercel.app**.
-  Deploy with `vercel deploy --prod --yes` from `website/`. `website/.vercel/` is gitignored.
+- **Public page / download:** [nishilfaldu.site/projects/sediment](https://nishilfaldu.site/projects/sediment)
+  (portfolio site). Email gate posts to Convex `POST /download`, which returns the latest
+  Mac DMGs from GitHub `releases/latest` — no hardcoded version on the site.
 - **Releases:** pushing a `v*` tag triggers `.github/workflows/release.yml` on `macos-latest`.
   With GitHub secrets `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`,
   `CSC_LINK`, and `CSC_KEY_PASSWORD` set, builds are Developer ID signed and notarized
@@ -98,13 +104,28 @@ bun run typecheck          # tsc across main + renderer
 
 ## Cursor Cloud specific instructions
 
-Sediment is a single Electron desktop app (main + preload + renderer). Standard commands live in the **Development Commands** section above and in `package.json` scripts. The dependency-refresh step (`bun install`, which runs the `postinstall` native rebuild of `better-sqlite3` against Electron's ABI) is handled by the startup update script — you do not need to run it manually.
+Sediment is a single Electron desktop app (main + preload + renderer) backed by Convex. Standard commands live in the **Development Commands** section above and in `package.json` scripts. Run `bunx convex dev` (or ensure `.env.local` has `VITE_CONVEX_URL`) before `bun dev`.
 
 Non-obvious caveats for running/testing here (headless Linux, not macOS):
 
 - **Running the app:** launch `bun dev` inside a long-lived tmux session (it stays running with HMR). A virtual X display is already available at `DISPLAY=:1`; the app renders there. If no display exists, wrap with `xvfb-run -a`.
 - **Sandbox:** Electron's setuid sandbox fails in this container. Export `ELECTRON_DISABLE_SANDBOX=1` in the shell before `bun dev`, otherwise the window never opens.
-- **Benign startup noise:** `Failed to connect to the bus` (dbus) and `Exiting GPU process ... errors during initialization` are expected in headless mode and do NOT indicate failure — the window still renders and SQLite schema bootstrap still runs.
-- **Testing link capture:** the main process polls the clipboard for `http(s)` URLs and saves them to today's Links tab automatically. To exercise it end-to-end, set the clipboard (`printf 'https://example.com' | DISPLAY=:1 xclip -selection clipboard`) while the app is running. A toast with **Undo** should appear; the link card lands on the Links grid. OG metadata fetches in the background (needs internet; failures are swallowed and the item still saves).
+- **Benign startup noise:** `Failed to connect to the bus` (dbus) and `Exiting GPU process ... errors during initialization` are expected in headless mode and do NOT indicate failure — the window still renders.
+- **Auth:** first launch shows email OTP sign-in (Convex Auth + Resend). Enter email → code → signed in.
+- **Testing link capture:** the main process polls the clipboard for `http(s)` URLs and the renderer saves them to today's Links tab via Convex. To exercise it end-to-end (while signed in), set the clipboard (`printf 'https://example.com' | DISPLAY=:1 xclip -selection clipboard`). A toast with **Undo** should appear; the link card lands on the Links grid. OG metadata fetches in a Convex action (needs internet; failures are swallowed and the item still saves).
 - **Lint:** `bun run check` rewrites/formats files in place; use `bun run lint` for a read-only check. There are 2 pre-existing lint warnings (exhaustive-deps) unrelated to setup.
-- **Database:** SQLite lives under Electron's `userData` dir (`sediment.db`, WAL). `ensure-schema.sql` is applied on startup; no external DB server.
+- **Database:** Convex cloud deployment (see dashboard). Item `createdAt` in the UI is Convex `_creationTime`.
+
+<!-- convex-ai-start -->
+
+This project uses [Convex](https://convex.dev) as its backend.
+
+When working on Convex code, **always read
+`convex/_generated/ai/guidelines.md` first** for important guidelines on
+how to correctly use Convex APIs and patterns. The file contains rules that
+override what you may have learned about Convex from training data.
+
+Convex agent skills for common tasks can be installed by running
+`npx convex ai-files install`.
+
+<!-- convex-ai-end -->

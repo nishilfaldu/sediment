@@ -1,5 +1,8 @@
 import type { JSX } from 'react'
 import { useRef, useState } from 'react'
+import { formatDayMarkdown } from '@shared/share'
+import { useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
 import { useDismiss } from '@/hooks/use-dismiss'
 import { useShareActions } from '@/hooks/use-share-actions'
 import { useToast } from '@/stores/toast'
@@ -14,12 +17,14 @@ export function ExportMenu({ dayId }: ExportMenuProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
   const showToast = useToast((s) => s.show)
   const share = useShareActions({ type: 'day', dayId })
+  const items = useQuery(api.items.getByDay, { dayId })
 
   useDismiss(ref, () => setOpen(false), open)
 
   async function saveFile(): Promise<void> {
     setOpen(false)
-    const result = await window.api.export.day(dayId)
+    const markdown = formatDayMarkdown(dayId, items ?? [])
+    const result = await window.api.export.saveMarkdown(`sediment-${dayId}.md`, markdown)
     if (result.saved) showToast('Exported to Markdown')
   }
 

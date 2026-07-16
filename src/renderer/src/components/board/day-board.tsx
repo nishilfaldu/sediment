@@ -18,7 +18,7 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
   const { links, notes, isLoading } = useWorkspaceItems(dayId)
   const createItem = useCreateItem()
   const updateItem = useUpdateItem()
-  const deleteItem = useDeleteItem(dayId)
+  const deleteItem = useDeleteItem()
   const tab = useWorkspaceTab((s) => s.getTab(dayId))
   const setTab = useWorkspaceTab((s) => s.setTab)
   const selectedIds = useSelection((s) => s.ids)
@@ -38,7 +38,7 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
 
   function handleAddNote(): void {
     setTab(dayId, 'notes')
-    createItem.mutate({ dayId, type: 'text', content: '' })
+    void createItem({ dayId, type: 'text', content: '' })
   }
 
   if (isLoading) {
@@ -76,12 +76,12 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
           <div className="mx-auto grid w-full max-w-6xl grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 p-6">
             {visibleItems.map((item) => (
               <BoardItem
-                key={item.id}
+                key={item._id}
                 item={item}
-                onDelete={() => deleteItem.mutate(item.id)}
-                onNoteSave={(note) => updateItem.mutate({ id: item.id, patch: { content: note } })}
-                selected={selectedIds.includes(item.id)}
-                onToggleSelect={() => toggleSelect(item.id)}
+                onDelete={() => void deleteItem(item._id)}
+                onNoteSave={(note) => void updateItem({ id: item._id, patch: { content: note } })}
+                selected={selectedIds.includes(item._id)}
+                onToggleSelect={() => toggleSelect(item._id)}
               />
             ))}
           </div>
@@ -91,12 +91,12 @@ export function DayBoard({ dayId }: DayBoardProps): JSX.Element {
           <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 p-6">
             {visibleItems.map((item, index) => (
               <BoardItem
-                key={item.id}
+                key={item._id}
                 item={item}
-                onDelete={() => deleteItem.mutate(item.id)}
-                onUpdate={(content) => updateItem.mutate({ id: item.id, patch: { content } })}
-                selected={selectedIds.includes(item.id)}
-                onToggleSelect={() => toggleSelect(item.id)}
+                onDelete={() => void deleteItem(item._id)}
+                onUpdate={(content) => void updateItem({ id: item._id, patch: { content } })}
+                selected={selectedIds.includes(item._id)}
+                onToggleSelect={() => toggleSelect(item._id)}
                 autoFocus={item.content === '' && index === visibleItems.length - 1}
               />
             ))}

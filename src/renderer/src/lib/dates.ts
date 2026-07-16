@@ -1,7 +1,7 @@
 import { format, isToday, isYesterday } from 'date-fns'
 
 // dayId ("2026-05-26") is a LOCAL calendar date, not a UTC moment.
-// Timestamps (createdAt, updatedAt) are UTC epoch ms; display them via
+// Timestamps (_creationTime, updatedAt) are UTC epoch ms; display them via
 // new Date(ms) which date-fns automatically formats in the user's local zone.
 //
 // Why dayId is local: if a user in UTC-4 saves something at 10 PM, their
