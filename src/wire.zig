@@ -126,8 +126,19 @@ fn sedimentUpdateFx(model: *Model, msg: Msg, fx: *Adapter.Effects) void {
     const pending_image_id = Host.model().pendingThumbImageId;
     switch (msg) {
         .thumb_ok => |payload| {
+            // Only commit thumb_ok when pixels actually land in the registry.
+            // Otherwise TS would map imageByItem → blank avatar "covers".
+            // Msg.thumb_err is a flattened Bytes payload (single field).
             if (payload.status >= 200 and payload.status < 300 and pending_image_id != 0) {
-                _ = fx.registerImageBytes(@intCast(pending_image_id), payload.body) catch {};
+                _ = fx.registerImageBytes(@intCast(pending_image_id), payload.body) catch {
+                    Host.dispatch(fx, .{ .thumb_err = "register_failed" });
+                    model.* = Host.model().*;
+                    return;
+                };
+            } else {
+                Host.dispatch(fx, .{ .thumb_err = "bad_status" });
+                model.* = Host.model().*;
+                return;
             }
         },
         else => {},

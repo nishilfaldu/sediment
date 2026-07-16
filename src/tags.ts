@@ -68,7 +68,8 @@ export function linkTagLabel(url: Bytes): Bytes {
 }
 
 export function isVideoTag(tag: Bytes): boolean {
-  return (
+  // YOUTUBE
+  if (
     tag.length === 7 &&
     tag[0] === 0x59 &&
     tag[1] === 0x4f &&
@@ -77,33 +78,57 @@ export function isVideoTag(tag: Bytes): boolean {
     tag[4] === 0x55 &&
     tag[5] === 0x42 &&
     tag[6] === 0x45
-  ); // YOUTUBE
+  ) {
+    return true;
+  }
+  // VIMEO
+  if (
+    tag.length === 5 &&
+    tag[0] === 0x56 &&
+    tag[1] === 0x49 &&
+    tag[2] === 0x4d &&
+    tag[3] === 0x45 &&
+    tag[4] === 0x4f
+  ) {
+    return true;
+  }
+  // TIKTOK
+  if (
+    tag.length === 6 &&
+    tag[0] === 0x54 &&
+    tag[1] === 0x49 &&
+    tag[2] === 0x4b &&
+    tag[3] === 0x54 &&
+    tag[4] === 0x4f &&
+    tag[5] === 0x4b
+  ) {
+    return true;
+  }
+  return false;
 }
 
 /** YouTube watch / share id, or null. */
 export function youtubeVideoId(url: Bytes): Bytes | null {
   const host = hostnameOf(url);
-  if (hostEquals(host, asciiBytes("youtu.be"))) {
+  if (hostEquals(host, asciiBytes("youtu.be")) || hostEquals(host, asciiBytes("yt.be"))) {
     return pathFirstSegment(url);
   }
   if (hostEquals(host, asciiBytes("youtube.com")) || hostEndsWith(host, asciiBytes(".youtube.com"))) {
     const v = queryParam(url, asciiBytes("v"));
     if (v !== null && v.length > 0) return v;
-    // /shorts/ID or /embed/ID
+    // /shorts/ID, /embed/ID, /live/ID
     const shorts = pathAfter(url, asciiBytes("/shorts/"));
     if (shorts !== null) return shorts;
     const embed = pathAfter(url, asciiBytes("/embed/"));
     if (embed !== null) return embed;
+    const live = pathAfter(url, asciiBytes("/live/"));
+    if (live !== null) return live;
   }
   return null;
 }
 
-/** Prefer stored OG thumbnail; else YouTube hqdefault. */
-export function resolveThumbnailUrl(sourceUrl: Bytes, stored: Bytes): Bytes {
-  if (stored.length > 0) return stored;
-  const yt = youtubeVideoId(sourceUrl);
-  if (yt === null) return EMPTY;
-  // https://img.youtube.com/vi/<id>/hqdefault.jpg
+function youtubeHqdefault(yt: Bytes): Bytes {
+  // https://img.youtube.com/vi/<id>/hqdefault.jpg — small enough for Cmd.fetch's 256 KiB cap.
   const prefix = asciiBytes("https://img.youtube.com/vi/");
   const suffix = asciiBytes("/hqdefault.jpg");
   const out = new Uint8Array(prefix.length + yt.length + suffix.length);
@@ -111,6 +136,18 @@ export function resolveThumbnailUrl(sourceUrl: Bytes, stored: Bytes): Bytes {
   out.set(yt, prefix.length);
   out.set(suffix, prefix.length + yt.length);
   return out;
+}
+
+/**
+ * Resolve the thumbnail URL to fetch for a link.
+ * YouTube always uses hqdefault (OG maxres often exceeds the 256 KiB fetch buffer).
+ * Other hosts prefer stored OG art, else empty.
+ */
+export function resolveThumbnailUrl(sourceUrl: Bytes, stored: Bytes): Bytes {
+  const yt = youtubeVideoId(sourceUrl);
+  if (yt !== null) return youtubeHqdefault(yt);
+  if (stored.length > 0) return stored;
+  return EMPTY;
 }
 
 export function domainLabel(url: Bytes): Bytes {

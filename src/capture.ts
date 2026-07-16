@@ -1,5 +1,5 @@
 import { EMPTY, bytesEqual, decimalBytes, type Bytes } from "./bytes.ts";
-import { parseOg } from "./og.ts";
+import { parseOg, resolveAbsoluteUrl } from "./og.ts";
 import { type Item } from "./store.ts";
 
 export interface OgJob {
@@ -84,7 +84,11 @@ export function itemsWithOg(items: readonly Item[], targetId: Bytes, body: Bytes
     changed = true;
     const title = meta.title.length > 0 ? meta.title : it.title;
     const description = meta.description.length > 0 ? meta.description : it.description;
-    const thumbnail = meta.thumbnail.length > 0 ? meta.thumbnail : it.thumbnail;
+    let thumbnail = it.thumbnail;
+    if (meta.thumbnail.length > 0) {
+      const absolute = resolveAbsoluteUrl(it.sourceUrl, meta.thumbnail);
+      thumbnail = absolute.length > 0 ? absolute : meta.thumbnail;
+    }
     return {
       ...it,
       title: title,

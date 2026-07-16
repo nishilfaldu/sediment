@@ -66,6 +66,12 @@ export interface CardRow {
   readonly hasImage: boolean;
   readonly hasDomain: boolean;
   readonly isVideo: boolean;
+  /** Still waiting on OG (show skeleton like Electron). */
+  readonly awaitingMeta: boolean;
+  /** Electron footer: specimen tag when there is no thumbnail. */
+  readonly showTagFooter: boolean;
+  /** Electron footer: domain when thumbnail is present and not video. */
+  readonly showDomainFooter: boolean;
 }
 
 export interface ThumbJob {
@@ -108,6 +114,8 @@ export interface Model {
   readonly thumbQueue: readonly ThumbJob[];
   /** ImageId the in-flight thumb fetch will register (Zig reads this). */
   readonly pendingThumbImageId: number;
+  /** Next canvas image slot to allocate (1..15). */
+  readonly nextImageSlot: number;
   /** itemId → registered ImageId for visible cards. */
   readonly imageByItem: readonly ImageSlot[];
 }
@@ -210,6 +218,7 @@ export const viewUnbound = [
   "ogQueue",
   "thumbQueue",
   "pendingThumbImageId",
+  "nextImageSlot",
   "imageByItem",
   "noteDraft",
   "searchDraft",
@@ -259,6 +268,7 @@ function emptyModel(): Model {
     ogQueue: [],
     thumbQueue: [],
     pendingThumbImageId: 0,
+    nextImageSlot: 1,
     imageByItem: [],
   };
 }
@@ -334,15 +344,39 @@ export function dayRows(model: Model): readonly DayRow[] {
   return rows;
 }
 
-function imageIdForItem(id: Bytes): number {
-  let n = 0;
-  for (let i = 0; i < id.length; i++) {
-    const c = id[i];
-    if (c < 48 || c > 57) break;
-    n = n * 10 + (c - 48);
+/** Canvas image registry has 16 slots; we use 1..15 for fetched thumbs. */
+const IMAGE_SLOT_MAX = 15;
+
+interface AllocImage {
+  readonly imageId: number;
+  readonly nextImageSlot: number;
+  readonly imageByItem: readonly ImageSlot[];
+}
+
+/**
+ * Allocate the next canvas ImageId (1..15). Reusing a slot clears any prior
+ * item mapping that pointed at it — avoids colliding art when many cards share ids.
+ */
+function allocImageSlot(
+  nextImageSlot: number,
+  imageByItem: readonly ImageSlot[],
+  itemId: Bytes,
+): AllocImage {
+  const imageId = nextImageSlot;
+  let nextSlot = imageId + 1;
+  if (nextSlot > IMAGE_SLOT_MAX) nextSlot = 1;
+
+  const next: ImageSlot[] = [];
+  for (const slot of imageByItem) {
+    if (bytesEqual(slot.id, itemId)) continue;
+    if (slot.imageId === imageId) continue;
+    next.push(slot);
   }
-  // Registry has 16 slots; keep 1..15 cycling by item id.
-  return (n % 15) + 1;
+  return {
+    imageId: imageId,
+    nextImageSlot: nextSlot,
+    imageByItem: next,
+  };
 }
 
 function lookupImageId(slots: readonly ImageSlot[], id: Bytes): number {
@@ -359,12 +393,22 @@ function upsertImageSlot(slots: readonly ImageSlot[], id: Bytes, imageId: number
     if (bytesEqual(slot.id, id)) {
       next.push({ id: id, imageId: imageId });
       found = true;
+    } else if (slot.imageId === imageId) {
+      // Slot reuse: drop the previous owner of this ImageId.
+      continue;
     } else {
       next.push(slot);
     }
   }
   if (!found) next.push({ id: id, imageId: imageId });
   return next;
+}
+
+function isAwaitingOg(model: Model, itemId: Bytes): boolean {
+  for (const job of model.ogQueue) {
+    if (bytesEqual(job.id, itemId)) return true;
+  }
+  return false;
 }
 
 export function visibleCards(model: Model): readonly CardRow[] {
@@ -382,6 +426,9 @@ export function visibleCards(model: Model): readonly CardRow[] {
       const tag = linkTagLabel(it.sourceUrl);
       const imageId = lookupImageId(model.imageByItem, it.id);
       const domain = domainLabel(it.sourceUrl);
+      const hasImage = imageId !== 0;
+      const isVideo = isVideoTag(tag);
+      const awaitingMeta = !hasTitle && isAwaitingOg(model, it.id);
       return {
         id: it.id,
         tag: tag,
@@ -393,9 +440,13 @@ export function visibleCards(model: Model): readonly CardRow[] {
         isLink: true,
         hasSubtitle: hasSubtitle,
         hasUrlLine: false,
-        hasImage: imageId !== 0,
+        hasImage: hasImage,
         hasDomain: domain.length > 0,
-        isVideo: isVideoTag(tag),
+        isVideo: isVideo,
+        awaitingMeta: awaitingMeta,
+        // Electron footer: tag if no thumb; domain if thumb and not video.
+        showTagFooter: !hasImage,
+        showDomainFooter: hasImage && !isVideo && domain.length > 0,
       };
     }
     return {
@@ -412,6 +463,9 @@ export function visibleCards(model: Model): readonly CardRow[] {
       hasImage: false,
       hasDomain: false,
       isVideo: false,
+      awaitingMeta: false,
+      showTagFooter: false,
+      showDomainFooter: false,
     };
   });
 }
@@ -548,16 +602,21 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
       if (parsed === null) return { ...model, ready: true };
       // Warm thumbnail fetches for links that already have OG art (or YT).
       const thumbQueue: ThumbJob[] = [];
+      let nextImageSlot = model.nextImageSlot;
+      let imageByItem = model.imageByItem;
       for (const it of parsed.items) {
         if (it.type !== "link") continue;
         const thumbUrl = resolveThumbnailUrl(it.sourceUrl, it.thumbnail);
         if (thumbUrl.length === 0) continue;
+        const alloc = allocImageSlot(nextImageSlot, imageByItem, it.id);
+        nextImageSlot = alloc.nextImageSlot;
+        imageByItem = alloc.imageByItem;
         thumbQueue.push({
           id: it.id,
           url: thumbUrl,
-          imageId: imageIdForItem(it.id),
+          imageId: alloc.imageId,
         });
-        if (thumbQueue.length >= 15) break;
+        if (thumbQueue.length >= IMAGE_SLOT_MAX) break;
       }
       if (thumbQueue.length === 0) {
         return {
@@ -566,6 +625,8 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
           nextId: parsed.nextId,
           items: parsed.items,
           dirty: false,
+          nextImageSlot: nextImageSlot,
+          imageByItem: imageByItem,
         };
       }
       return [
@@ -577,6 +638,8 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
           dirty: false,
           thumbQueue: thumbQueue,
           pendingThumbImageId: thumbQueue[0].imageId,
+          nextImageSlot: nextImageSlot,
+          imageByItem: imageByItem,
         },
         Cmd.fetch(
           {
@@ -850,6 +913,8 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
       let items = model.items;
       let dirty = model.dirty;
       let thumbQueue = model.thumbQueue;
+      let nextImageSlot = model.nextImageSlot;
+      let imageByItem = model.imageByItem;
       if (msg.status >= 200 && msg.status < 400) {
         const patched = itemsWithOg(model.items, head.id, msg.body);
         if (patched !== null) {
@@ -866,9 +931,24 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
           thumbUrl = resolveThumbnailUrl(head.url, EMPTY);
         }
         if (thumbUrl.length > 0) {
+          const alloc = allocImageSlot(nextImageSlot, imageByItem, head.id);
+          nextImageSlot = alloc.nextImageSlot;
+          imageByItem = alloc.imageByItem;
           thumbQueue = [
             ...thumbQueue,
-            { id: head.id, url: thumbUrl, imageId: imageIdForItem(head.id) },
+            { id: head.id, url: thumbUrl, imageId: alloc.imageId },
+          ];
+        }
+      } else {
+        // Non-2xx/3xx: still try YouTube hqdefault when the URL is a video.
+        const thumbUrl = resolveThumbnailUrl(head.url, EMPTY);
+        if (thumbUrl.length > 0) {
+          const alloc = allocImageSlot(nextImageSlot, imageByItem, head.id);
+          nextImageSlot = alloc.nextImageSlot;
+          imageByItem = alloc.imageByItem;
+          thumbQueue = [
+            ...thumbQueue,
+            { id: head.id, url: thumbUrl, imageId: alloc.imageId },
           ];
         }
       }
@@ -881,6 +961,8 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
         dirty: dirty,
         thumbQueue: thumbQueue,
         pendingThumbImageId: pendingThumbImageId,
+        nextImageSlot: nextImageSlot,
+        imageByItem: imageByItem,
       };
       if (rest.length > 0 && dirty && startThumb) {
         return [
@@ -1002,21 +1084,86 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
     }
     case "og_err": {
       if (model.ogQueue.length === 0) return model;
+      const head = model.ogQueue[0];
       const rest = model.ogQueue.slice(1);
-      const next: Model = { ...model, ogQueue: rest };
-      if (rest.length === 0) return next;
-      return [
-        next,
-        Cmd.fetch(
-          {
-            url: rest[0].url,
-            method: "GET",
-            headers: { "user-agent": "Sediment/2.0" },
-            timeoutMs: 8000,
-          },
-          { key: "og", ok: "og_ok", err: "og_err" },
-        ),
-      ];
+      let thumbQueue = model.thumbQueue;
+      let nextImageSlot = model.nextImageSlot;
+      let imageByItem = model.imageByItem;
+      // Network/parse failure: still queue YouTube hqdefault when applicable.
+      const thumbUrl = resolveThumbnailUrl(head.url, EMPTY);
+      if (thumbUrl.length > 0) {
+        const alloc = allocImageSlot(nextImageSlot, imageByItem, head.id);
+        nextImageSlot = alloc.nextImageSlot;
+        imageByItem = alloc.imageByItem;
+        thumbQueue = [
+          ...thumbQueue,
+          { id: head.id, url: thumbUrl, imageId: alloc.imageId },
+        ];
+      }
+      const startThumb = model.thumbQueue.length === 0 && thumbQueue.length > 0;
+      const pendingThumbImageId = startThumb ? thumbQueue[0].imageId : model.pendingThumbImageId;
+      const next: Model = {
+        ...model,
+        ogQueue: rest,
+        thumbQueue: thumbQueue,
+        pendingThumbImageId: pendingThumbImageId,
+        nextImageSlot: nextImageSlot,
+        imageByItem: imageByItem,
+      };
+      if (rest.length > 0 && startThumb) {
+        return [
+          next,
+          Cmd.batch([
+            Cmd.fetch(
+              {
+                url: rest[0].url,
+                method: "GET",
+                headers: { "user-agent": "Sediment/2.0" },
+                timeoutMs: 8000,
+              },
+              { key: "og", ok: "og_ok", err: "og_err" },
+            ),
+            Cmd.fetch(
+              {
+                url: thumbQueue[0].url,
+                method: "GET",
+                headers: { "user-agent": "Sediment/2.0" },
+                timeoutMs: 8000,
+              },
+              { key: "thumb", ok: "thumb_ok", err: "thumb_err" },
+            ),
+          ]),
+        ];
+      }
+      if (rest.length > 0) {
+        return [
+          next,
+          Cmd.fetch(
+            {
+              url: rest[0].url,
+              method: "GET",
+              headers: { "user-agent": "Sediment/2.0" },
+              timeoutMs: 8000,
+            },
+            { key: "og", ok: "og_ok", err: "og_err" },
+          ),
+        ];
+      }
+      if (startThumb) {
+        return [
+          next,
+          Cmd.fetch(
+            {
+              url: thumbQueue[0].url,
+              method: "GET",
+              headers: { "user-agent": "Sediment/2.0" },
+              timeoutMs: 8000,
+            },
+            { key: "thumb", ok: "thumb_ok", err: "thumb_err" },
+          ),
+        ];
+      }
+      return next;
     }
     case "thumb_ok": {
       if (model.thumbQueue.length === 0) {

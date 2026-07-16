@@ -22,7 +22,7 @@ A personal content collection desktop app for macOS. Throughout the day you enco
 | Manifest | `app.zon` |
 | Persistence | `Cmd.readFile` / `Cmd.writeFile` under `~/Library/Application Support/Sediment/` |
 | Capture | Clipboard polling via `Sub.timer` + `Cmd.clipboardRead` |
-| Previews | `Cmd.fetch` + best-effort OG/meta parse in `src/og.ts` |
+| Previews | `Cmd.fetch` + OG/meta parse (`src/og.ts`); YouTube uses `hqdefault` (256 KiB fetch cap); thumbs register only on decode success |
 
 There is **no Electron, React, SQLite, or Node runtime** in the shipped binary. Master (`master` branch) still has the previous Electron implementation for behavioral reference — use `git show master:<path>` when porting behavior.
 
@@ -47,7 +47,7 @@ app.zon         Identity, window, permissions (clipboard, network)
 
 Loop: events → messages → `update` → model → markup bindings. Effects are `Cmd` data; recurring clipboard polls are `Sub` data.
 
-**Theming:** Stock TS apps only get `app.zon` `theme` / `theme_accent`. Sediment needs the full field-guide palette + faces, so `build.zig` stages `src/wire.zig` (not the SDK’s `ts_core_main`) with static `tokens` from `src/theme.zig` and embeds `assets/fonts/` (Archivo, IBM Plex Mono, Besley). OG thumbnails register via a wrapped `update_fx` (`fx.registerImageBytes`) and render as rectangular `<avatar radius="sm">` covers. Do not add `src/main.zig` alongside `src/core.ts`.
+**Theming:** Stock TS apps only get `app.zon` `theme` / `theme_accent`. Sediment needs the full field-guide palette + faces, so `build.zig` stages `src/wire.zig` (not the SDK’s `ts_core_main`) with static `tokens` from `src/theme.zig` and embeds `assets/fonts/` (Archivo, IBM Plex Mono, Besley). OG thumbnails register via a wrapped `update_fx` (`fx.registerImageBytes` — failures become `thumb_err`, never blank avatars) and render as rectangular `<avatar radius="sm">` covers. Image slots rotate 1..15 with eviction. Do not add `src/main.zig` alongside `src/core.ts`.
 
 ---
 

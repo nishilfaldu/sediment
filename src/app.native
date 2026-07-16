@@ -70,50 +70,75 @@
               <!-- Electron auto-fill grid: columns from frame width / 260. -->
               <grid columns="{boardColumns}" gap="16" label="Links grid">
                 <for each="visibleCards" key="id" as="card">
-                  <panel background="surface" radius="sm" border-color="border" label="Item card">
-                    <column gap="0">
-                      <if test="{card.hasImage}">
-                        <stack height="160">
-                          <avatar height="160" radius="sm" image="{card.imageId}" label="Link thumbnail"> </avatar>
-                          <row padding="12" cross="start">
-                            <row padding="4" background="surface" radius="sm" border-color="border">
-                              <text size="sm" foreground="success"><span weight="medium" mono="true">{card.tag}</span></text>
+                  <if test="{card.awaitingMeta}">
+                    <panel background="surface" radius="sm" border-color="border" label="Loading card">
+                      <column gap="0">
+                        <panel height="160" background="surface_pressed" radius="sm" label="Thumb skeleton" />
+                        <column padding="16" gap="8" cross="start">
+                          <panel height="14" background="surface_pressed" radius="sm" label="Title skeleton" />
+                          <panel height="10" background="surface_pressed" radius="sm" label="Body skeleton" />
+                        </column>
+                      </column>
+                    </panel>
+                  </if>
+                  <else>
+                    <panel background="surface" radius="sm" border-color="border" label="Item card">
+                      <column gap="0">
+                        <if test="{card.hasImage}">
+                          <stack height="160">
+                            <avatar height="160" radius="sm" image="{card.imageId}" label="Link thumbnail"> </avatar>
+                            <if test="{card.isVideo}">
+                              <column main="center" cross="center">
+                                <panel padding="10" background="surface" radius="sm" border-color="border" label="Play">
+                                  <icon name="play" width="18" height="18" foreground="text" />
+                                </panel>
+                              </column>
+                            </if>
+                            <row padding="12" cross="start">
+                              <row padding="4" background="surface" radius="sm" border-color="border">
+                                <text size="sm" foreground="success"><span weight="medium" mono="true">{card.tag}</span></text>
+                              </row>
+                              <spacer grow="1" />
+                              <button size="sm" variant="ghost" icon="trash"
+                                      on-press="delete_item:{card.id}" label="Delete item" />
                             </row>
+                          </stack>
+                        </if>
+                        <else>
+                          <row padding="12" gap="8" cross="center">
                             <spacer grow="1" />
                             <button size="sm" variant="ghost" icon="trash"
                                     on-press="delete_item:{card.id}" label="Delete item" />
                           </row>
-                        </stack>
-                      </if>
-                      <else>
-                        <row padding="12" gap="8" cross="center">
-                          <row padding="4" background="surface" radius="sm" border-color="border">
-                            <text size="sm" foreground="success"><span weight="medium" mono="true">{card.tag}</span></text>
-                          </row>
-                          <spacer grow="1" />
-                          <button size="sm" variant="ghost" icon="trash"
-                                  on-press="delete_item:{card.id}" label="Delete item" />
-                        </row>
-                      </else>
+                        </else>
 
-                      <column padding="16" gap="8" cross="start">
-                        <text wrap="true">{card.title}</text>
-                        <if test="{card.hasSubtitle}">
-                          <text size="sm" foreground="text_muted" wrap="true">{card.subtitle}</text>
-                        </if>
-                        <row gap="8" cross="center">
-                          <if test="{card.hasDomain}">
-                            <text size="sm" foreground="text_muted" grow="1">{card.domain}</text>
+                        <column padding="16" gap="8" cross="start">
+                          <text wrap="true">{card.title}</text>
+                          <if test="{card.hasSubtitle}">
+                            <text size="sm" foreground="text_muted" wrap="true">{card.subtitle}</text>
                           </if>
-                          <else>
-                            <spacer grow="1" />
-                          </else>
-                          <button size="sm" variant="ghost" icon="external-link"
-                                  on-press="open_item:{card.id}" label="Open link">Open</button>
-                        </row>
+                          <row gap="8" cross="center">
+                            <if test="{card.showTagFooter}">
+                              <row padding="4" background="surface" radius="sm" border-color="border">
+                                <text size="sm" foreground="success"><span weight="medium" mono="true">{card.tag}</span></text>
+                              </row>
+                              <spacer grow="1" />
+                            </if>
+                            <else>
+                              <if test="{card.showDomainFooter}">
+                                <text size="sm" foreground="text_muted" grow="1"><span mono="true">{card.domain}</span></text>
+                              </if>
+                              <else>
+                                <spacer grow="1" />
+                              </else>
+                            </else>
+                            <button size="sm" variant="ghost" icon="external-link"
+                                    on-press="open_item:{card.id}" label="Open link">Open</button>
+                          </row>
+                        </column>
                       </column>
-                    </column>
-                  </panel>
+                    </panel>
+                  </else>
                 </for>
               </grid>
             </if>
