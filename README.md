@@ -39,8 +39,8 @@ download it).
 | `src/app.native` | UI |
 | `app.zon` | Identity, window, permissions |
 
-Agent skills for this toolkit are vendored under `.agents/skills/`,
-`.cursor/skills/`, and `.claude/skills/`. See `AGENTS.md`.
+Agent skills for this toolkit are **not** vendored in-tree. When working on
+this Native port, pull what you need with `native skills get …` (see `AGENTS.md`).
 
 ## Website
 

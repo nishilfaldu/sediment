@@ -2,7 +2,7 @@
 
 ⚠️ **IMPORTANT FOR AI AGENTS:** This file (`AGENTS.md`) and `CLAUDE.md` are clones — keep them in sync on substantial changes. Skip minor UI/copy edits.
 
-**Native SDK skills** live in `.agents/skills/`, `.cursor/skills/`, and `.claude/skills/` (`native-sdk`, `core`, `ts-core`, `native-ui`, `automation`, `zig`). Before changing the app, load the relevant skill (`native skills get ts-core`, `native skills get native-ui`, etc.).
+**Status:** Electron on `master` is the shipping app. This `native-sdk` branch is an experimental Native SDK port (paused — SDK fetch/image caps block preview parity). When resuming Native work, pull skills with `native skills get ts-core` / `native skills get native-ui` (etc.) rather than vendoring them in-tree.
 
 ---
 
