@@ -1,6 +1,6 @@
 import type { ItemType } from './types'
 
-// Payload the renderer sends when creating or updating an item.
+/** Fields the renderer sends when creating or updating an item. */
 export interface CreateItemPayload {
   dayId: string
   type: ItemType
@@ -9,10 +9,4 @@ export interface CreateItemPayload {
   title?: string | null
   description?: string | null
   thumbnail?: string | null
-}
-
-export interface OgMetadataPatch {
-  title: string | null
-  description: string | null
-  thumbnail: string | null
 }

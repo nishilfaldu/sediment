@@ -1,4 +1,5 @@
 import type { JSX } from 'react'
+import { useEffect, useRef } from 'react'
 import { DayListItem } from '@/components/calendar/day-list-item'
 import { useDayList } from '@/hooks/use-day-list'
 import { useCurrentDay } from '@/stores/current-day'
@@ -7,7 +8,26 @@ import { useUI } from '@/stores/ui'
 export function HistoryPanel(): JSX.Element {
   const { historyOpen, toggleHistory } = useUI()
   const { dayId, setDayId } = useCurrentDay()
-  const allDays = useDayList()
+  const { days, status, loadMore } = useDayList()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const root = scrollRef.current
+    const sentinel = sentinelRef.current
+    if (!root || !sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting) && status === 'CanLoadMore') {
+          loadMore()
+        }
+      },
+      { root, rootMargin: '80px', threshold: 0 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [status, loadMore])
 
   return (
     <aside
@@ -39,8 +59,8 @@ export function HistoryPanel(): JSX.Element {
         </div>
 
         {/* Days read as strata: newest at the surface, dotted bed boundaries. */}
-        <div className="flex flex-col overflow-y-auto pb-4">
-          {allDays.map((day) => (
+        <div ref={scrollRef} className="flex flex-col overflow-y-auto pb-4">
+          {days.map((day) => (
             <DayListItem
               key={day.id}
               day={day}
@@ -48,6 +68,10 @@ export function HistoryPanel(): JSX.Element {
               onClick={() => setDayId(day.id)}
             />
           ))}
+          <div ref={sentinelRef} className="h-1 shrink-0" aria-hidden="true" />
+          {status === 'LoadingMore' && (
+            <p className="px-4 py-2 font-mono text-[10px] text-ghost">Loading…</p>
+          )}
         </div>
       </div>
     </aside>

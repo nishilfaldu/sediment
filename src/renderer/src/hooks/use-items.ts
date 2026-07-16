@@ -1,48 +1,41 @@
 import type { CreateItemPayload } from '@shared/contracts'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { Item } from '@/types'
+import { useMutation, useQuery } from 'convex/react'
+import type { Id } from '@convex/_generated/dataModel'
+import { api } from '@convex/_generated/api'
 
 export type { CreateItemPayload }
 
-function invalidateDay(qc: ReturnType<typeof useQueryClient>, dayId: string): void {
-  qc.invalidateQueries({ queryKey: ['items', dayId] })
-  qc.invalidateQueries({ queryKey: ['days'] })
+function asItemId(id: string): Id<'items'> {
+  return id as Id<'items'>
 }
 
 export function useItems(dayId: string) {
-  return useQuery({
-    queryKey: ['items', dayId],
-    queryFn: () => window.api.items.getByDay(dayId)
-  })
+  const data = useQuery(api.items.getByDay, { dayId })
+  return {
+    data: data ?? [],
+    isLoading: data === undefined
+  }
+}
+
+/** Load items by id; Convex `Id` casting stays inside this hook. */
+export function useItemsByIds(ids: string[] | undefined) {
+  return useQuery(
+    api.items.getByIds,
+    ids && ids.length > 0 ? { ids: ids.map(asItemId) } : 'skip'
+  )
 }
 
 export function useCreateItem() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: CreateItemPayload) => window.api.items.create(payload),
-    onSuccess: (item: Item) => {
-      invalidateDay(qc, item.dayId)
-    }
-  })
+  return useMutation(api.items.create)
 }
 
 export function useUpdateItem() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<CreateItemPayload> }) =>
-      window.api.items.update(id, patch),
-    onSuccess: (item: Item) => {
-      qc.invalidateQueries({ queryKey: ['items', item.dayId] })
-    }
-  })
+  const update = useMutation(api.items.update)
+  return (args: { id: string; patch: Partial<CreateItemPayload> }) =>
+    update({ id: asItemId(args.id), patch: args.patch })
 }
 
-export function useDeleteItem(dayId: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => window.api.items.delete(id),
-    onSuccess: () => {
-      invalidateDay(qc, dayId)
-    }
-  })
+export function useDeleteItem() {
+  const remove = useMutation(api.items.remove)
+  return (id: string) => remove({ id: asItemId(id) })
 }

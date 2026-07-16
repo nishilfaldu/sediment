@@ -1,21 +1,20 @@
-import type { ClipboardCapturePayload } from '@shared/clipboard-capture'
+import type { ClipboardCandidatePayload } from '@shared/clipboard-capture'
 import { todayId } from '@shared/dates'
 import type { DetectedLink } from '@shared/detect-url'
 import { detectUrl } from '@shared/detect-url'
 import { type BrowserWindow, clipboard, ipcMain } from 'electron'
-import { registerCaptureToast, showCaptureOverlay, showDuplicateOverlay } from './capture-toast'
-import { createItemRecord, hasSourceUrlOnDay } from './create-item'
+import { registerCaptureToast } from './capture-toast'
 import { isMainWindowForeground } from './main-window'
 
 const POLL_MS = 500
-const SUPPRESS_MS = 30_000
+/** Brief pause after Undo so the URL still sitting on the clipboard is not immediately re-saved. */
+const SUPPRESS_MS = 2_000
 const OWN_WRITE_MS = 1_500
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let lastClipboardText = ''
 let ignoreOwnWritesUntil = 0
 const suppressedUrls = new Map<string, number>()
-let lastDuplicateUrl = ''
 
 function isSuppressed(url: string): boolean {
   const until = suppressedUrls.get(url)
@@ -43,66 +42,20 @@ function pruneSuppressed(): void {
   }
 }
 
-function notifyCapture(win: BrowserWindow, payload: ClipboardCapturePayload): void {
-  win.webContents.send('clipboard:captured', payload)
+function notifyCandidate(win: BrowserWindow, payload: ClipboardCandidatePayload): void {
+  win.webContents.send('clipboard:candidate', payload)
 }
 
-function notifyDuplicate(
-  win: BrowserWindow,
-  dayId: string,
-  sourceUrl: string,
-  showInAppToast: boolean
-): void {
-  win.webContents.send('clipboard:duplicate', { dayId, sourceUrl, showInAppToast })
-}
-
-type CaptureResult = 'captured' | 'duplicate' | 'skipped'
-
-function captureUrlToToday(
-  detected: DetectedLink,
-  getWindow: () => BrowserWindow | null
-): CaptureResult {
+function offerUrlToToday(detected: DetectedLink, getWindow: () => BrowserWindow | null): void {
   const dayId = todayId()
   const win = getWindow()
-  const foreground = isMainWindowForeground(win)
+  if (!win) return
 
-  if (hasSourceUrlOnDay(dayId, detected.sourceUrl)) {
-    if (lastDuplicateUrl === detected.sourceUrl) return 'duplicate'
-    lastDuplicateUrl = detected.sourceUrl
-    if (win) {
-      notifyDuplicate(win, dayId, detected.sourceUrl, foreground)
-    }
-    if (!foreground) showDuplicateOverlay(detected.sourceUrl)
-    return 'duplicate'
-  }
-
-  lastDuplicateUrl = ''
-
-  const item = createItemRecord({
+  notifyCandidate(win, {
     dayId,
-    type: 'link',
     sourceUrl: detected.sourceUrl,
-    content: null
+    showInAppToast: isMainWindowForeground(win)
   })
-
-  if (win) {
-    notifyCapture(win, {
-      id: item.id,
-      dayId: item.dayId,
-      sourceUrl: detected.sourceUrl,
-      showInAppToast: foreground
-    })
-  }
-
-  if (!foreground) {
-    showCaptureOverlay({
-      id: item.id,
-      dayId: item.dayId,
-      sourceUrl: detected.sourceUrl
-    })
-  }
-
-  return 'captured'
 }
 
 function tryCapture(getWindow: () => BrowserWindow | null): void {
@@ -110,13 +63,19 @@ function tryCapture(getWindow: () => BrowserWindow | null): void {
 
   const text = clipboard.readText().trim()
   if (!text || text === lastClipboardText) return
-  lastClipboardText = text
 
   const detected = detectUrl(text)
-  if (!detected) return
+  if (!detected) {
+    lastClipboardText = text
+    return
+  }
+
+  // While suppressed, do not advance lastClipboardText — otherwise a re-copy during
+  // the suppress window is marked "seen" and never captured after suppress expires.
   if (isSuppressed(detected.sourceUrl)) return
 
-  captureUrlToToday(detected, getWindow)
+  lastClipboardText = text
+  offerUrlToToday(detected, getWindow)
 }
 
 export function registerClipboardWatcher(getWindow: () => BrowserWindow | null): void {

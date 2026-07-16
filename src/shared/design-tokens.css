@@ -1,6 +1,6 @@
 /*
- * Canonical Sediment field-guide palette. Keep website/tokens.css in sync.
- * Imported by the renderer via main.css; linked from website/index.html.
+ * Canonical Sediment field-guide palette.
+ * Imported by the renderer via main.css.
  */
 :root {
   --sediment-paper: #eaeae3;

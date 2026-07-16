@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
 
 export function useSearch(query: string) {
   const trimmed = query.trim()
-  return useQuery({
-    queryKey: ['search', trimmed],
-    queryFn: () => window.api.search.query(trimmed),
-    enabled: trimmed.length > 0,
-    placeholderData: (prev) => prev
-  })
+  const data = useQuery(api.search.queryItems, trimmed.length > 0 ? { query: trimmed } : 'skip')
+  return {
+    data: data ?? [],
+    isLoading: trimmed.length > 0 && data === undefined
+  }
 }

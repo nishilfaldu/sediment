@@ -1,22 +1,7 @@
-import { copyFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'electron-vite'
-import type { Plugin } from 'vite'
-
-// Copies ensure-schema.sql into out/main/ so the production build can apply it
-// at startup. electron-vite doesn't bundle non-JS assets from main automatically.
-function copySchemaPlugin(): Plugin {
-  return {
-    name: 'copy-schema',
-    closeBundle() {
-      const src = resolve('src/main/db/ensure-schema.sql')
-      const dest = resolve('out/main/ensure-schema.sql')
-      copyFileSync(src, dest)
-    }
-  }
-}
 
 const sharedAlias = { '@shared': resolve('src/shared') }
 
@@ -25,7 +10,6 @@ export default defineConfig({
     // externalizeDeps: true is the default in electron-vite v5 — all node_modules
     // are kept as require/import calls rather than being bundled.
     resolve: { alias: sharedAlias },
-    plugins: [copySchemaPlugin()],
     build: {
       rollupOptions: {
         // Output as ES module so Electron 36+ can intercept `import 'electron'`
@@ -44,10 +28,16 @@ export default defineConfig({
       alias: {
         '@shared': resolve('src/shared'),
         // @/ maps to the renderer source root — consistent with React/Vite ecosystem convention
-        '@': resolve('src/renderer/src')
+        '@': resolve('src/renderer/src'),
+        // Convex generated client — outside the renderer tree, so use an alias
+        '@convex': resolve('convex')
       }
     },
     plugins: [react(), tailwindcss()],
+    server: {
+      // Allow importing convex/_generated from outside src/renderer
+      fs: { allow: [resolve('.'), resolve('convex')] }
+    },
     build: {
       rollupOptions: {
         input: {

@@ -1,64 +1,90 @@
-import type { ClipboardCapturePayload } from '@shared/clipboard-capture'
+import type { ClipboardCandidatePayload } from '@shared/clipboard-capture'
+import { todayId } from '@shared/dates'
 import { BRIEF_TOAST_MS, CAPTURE_TOAST_MS, linkCapturePreview } from '@shared/toast'
-import { useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
+import { useEffect, useRef } from 'react'
+import { useDeleteItem } from '@/hooks/use-items'
 import { useCurrentDay } from '@/stores/current-day'
 import { useRecentItems } from '@/stores/recent-items'
 import { useToast } from '@/stores/toast'
 import { useWorkspaceTab } from '@/stores/workspace-tab'
 
-function captureToastMessage(payload: ClipboardCapturePayload): string {
-  const preview = linkCapturePreview(payload.sourceUrl)
+function captureToastMessage(sourceUrl: string): string {
+  const preview = linkCapturePreview(sourceUrl)
   return `Saved ${preview.tagLabel} · ${preview.detail}`
 }
 
-function invalidateDay(qc: ReturnType<typeof useQueryClient>, dayId: string): void {
-  qc.invalidateQueries({ queryKey: ['items', dayId] })
-  qc.invalidateQueries({ queryKey: ['days'] })
-}
-
 export function useClipboardCapture(): void {
-  const qc = useQueryClient()
+  const captureLink = useMutation(api.items.captureLink)
+  const deleteItem = useDeleteItem()
+  const inFlight = useRef(new Set<string>())
 
   useEffect(() => {
-    const unsubCapture = window.api.on.clipboardCaptured((payload) => {
-      useCurrentDay.getState().setDayId(payload.dayId)
-      useWorkspaceTab.getState().setTab(payload.dayId, 'links')
-      useRecentItems.getState().markRecent(payload.id)
-      invalidateDay(qc, payload.dayId)
+    const undoCapture = (id: string, sourceUrl: string) => {
+      void deleteItem(id).then(() => {
+        void window.api.clipboard.suppress(sourceUrl)
+      })
+    }
 
-      if (!payload.showInAppToast) return
+    const unsubCandidate = window.api.on.clipboardCandidate((payload: ClipboardCandidatePayload) => {
+      const dayId = payload.dayId || todayId()
+      const key = `${dayId}:${payload.sourceUrl}`
+      if (inFlight.current.has(key)) return
+      inFlight.current.add(key)
 
-      useToast.getState().show(captureToastMessage(payload), {
-        durationMs: CAPTURE_TOAST_MS,
-        action: {
-          label: 'Undo',
-          onClick: () => {
-            void window.api.items.delete(payload.id).then(() => {
-              void window.api.clipboard.suppress(payload.sourceUrl)
-              invalidateDay(qc, payload.dayId)
+      void (async () => {
+        try {
+          const result = await captureLink({
+            dayId,
+            sourceUrl: payload.sourceUrl
+          })
+
+          if (result.status === 'duplicate') {
+            if (payload.showInAppToast) {
+              const preview = linkCapturePreview(payload.sourceUrl)
+              useToast.getState().show(`Already saved · ${preview.tagLabel}`, {
+                durationMs: BRIEF_TOAST_MS
+              })
+            } else {
+              await window.api.captureToast.showDuplicateOverlay(payload.sourceUrl)
+            }
+            return
+          }
+
+          const item = result.item
+          useCurrentDay.getState().setDayId(item.dayId)
+          useWorkspaceTab.getState().setTab(item.dayId, 'links')
+          useRecentItems.getState().markRecent(item._id)
+
+          if (payload.showInAppToast) {
+            useToast.getState().show(captureToastMessage(payload.sourceUrl), {
+              durationMs: CAPTURE_TOAST_MS,
+              action: {
+                label: 'Undo',
+                onClick: () => undoCapture(item._id, payload.sourceUrl)
+              }
+            })
+          } else {
+            await window.api.captureToast.showOverlay({
+              id: item._id,
+              dayId: item.dayId,
+              sourceUrl: payload.sourceUrl
             })
           }
+        } finally {
+          inFlight.current.delete(key)
         }
-      })
+      })()
     })
 
-    const unsubDuplicate = window.api.on.clipboardDuplicate((payload) => {
-      if (!payload.showInAppToast) return
-      const preview = linkCapturePreview(payload.sourceUrl)
-      useToast.getState().show(`Already saved · ${preview.tagLabel}`, {
-        durationMs: BRIEF_TOAST_MS
-      })
-    })
-
-    const unsubUndone = window.api.on.clipboardUndone((payload) => {
-      invalidateDay(qc, payload.dayId)
+    const unsubUndo = window.api.on.clipboardUndoRequest((payload) => {
+      undoCapture(payload.id, payload.sourceUrl)
     })
 
     return () => {
-      unsubCapture()
-      unsubDuplicate()
-      unsubUndone()
+      unsubCandidate()
+      unsubUndo()
     }
-  }, [qc])
+  }, [captureLink, deleteItem])
 }

@@ -1,6 +1,5 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, nativeTheme, shell } from 'electron'
-import { initDb } from './db'
+import { app, BrowserWindow, nativeTheme, shell } from 'electron'
 import { registerAllHandlers } from './ipc'
 import { closeCaptureToastWindow, destroyCaptureToast } from './services/capture-toast'
 import { registerClipboardWatcher, unregisterClipboardWatcher } from './services/clipboard-watcher'
@@ -77,21 +76,6 @@ app.whenReady().then(() => {
     app.setAppUserModelId('com.sediment')
   }
 
-  // Initialise SQLite and ensure tables/indexes exist.
-  try {
-    initDb()
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error('[db] failed to initialise:', message)
-    dialog.showErrorBox(
-      'Sediment could not start',
-      `The local database could not be opened or migrated.\n\n${message}\n\nIf this keeps happening, quit Sediment and delete sediment.db from Application Support.`
-    )
-    app.quit()
-    return
-  }
-
-  // Register all ipcMain.handle channels
   registerAllHandlers()
 
   // In dev: F12 toggles DevTools. In prod: block Cmd/Ctrl+R (accidental reload).

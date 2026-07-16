@@ -4,8 +4,8 @@ import { join } from 'node:path'
 import { app, type BrowserWindow, screen } from 'electron'
 
 // Persist window size/position across restarts. Kept dependency-free (a small
-// JSON file in userData, same place the image store writes) rather than pulling
-// in electron-store — we only need four numbers.
+// JSON file in userData) rather than pulling in electron-store — we only need
+// four numbers.
 
 interface WindowState {
   width: number
