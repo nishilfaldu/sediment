@@ -265,21 +265,63 @@ function concat3(a: Bytes, b: Bytes, c: Bytes): Bytes {
 
 /** Best-effort Open Graph / Twitter / title extraction from an HTML body. */
 export function parseOg(html: Bytes): OgMeta {
+  // Lightweight JSON bodies (GitHub Accept: json, YouTube oEmbed) — under the
+  // 256 KiB Cmd.fetch cap when full HTML is not.
+  const jsonTitle = jsonStringField(html, asciiBytes("title"));
+  const jsonDesc = jsonStringField(html, asciiBytes("description"));
+  if (jsonTitle.length > 0 && indexOfBytesIgnoreCase(html, asciiBytes("<meta"), 0) < 0) {
+    return {
+      title: jsonTitle,
+      description: jsonDesc,
+      thumbnail: EMPTY,
+    };
+  }
+
   let title = findMetaContent(html, asciiBytes("og:title"));
   if (title.length === 0) title = findMetaContent(html, asciiBytes("twitter:title"));
   if (title.length === 0) title = titleTag(html);
+  if (title.length === 0) title = jsonTitle;
 
   let description = findMetaContent(html, asciiBytes("og:description"));
   if (description.length === 0) description = findMetaContent(html, asciiBytes("twitter:description"));
   if (description.length === 0) description = findMetaContent(html, asciiBytes("description"));
+  if (description.length === 0) description = jsonDesc;
 
   let thumbnail = findMetaContent(html, asciiBytes("og:image"));
   if (thumbnail.length === 0) thumbnail = findMetaContent(html, asciiBytes("og:image:secure_url"));
   if (thumbnail.length === 0) thumbnail = findMetaContent(html, asciiBytes("twitter:image"));
   if (thumbnail.length === 0) thumbnail = findMetaContent(html, asciiBytes("twitter:image:src"));
+  if (thumbnail.length === 0) thumbnail = jsonStringField(html, asciiBytes("thumbnail_url"));
 
   if (title.length === 0 && description.length === 0 && thumbnail.length === 0) {
     return EMPTY_META;
   }
   return { title: title, description: description, thumbnail: thumbnail };
+}
+
+/** Pull `"key":"..."` from a JSON object body (oEmbed / GitHub meta). */
+function jsonStringField(body: Bytes, key: Bytes): Bytes {
+  const needle = new Uint8Array(1 + key.length + 2);
+  needle[0] = 0x22; // "
+  needle.set(key, 1);
+  needle[1 + key.length] = 0x22; // "
+  needle[2 + key.length] = 0x3a; // :
+  const at = indexOfBytesIgnoreCase(body, needle, 0);
+  if (at < 0) return EMPTY;
+  let i = skipWs(body, at + needle.length);
+  if (i >= body.length || body[i] !== 0x22) return EMPTY;
+  i = i + 1;
+  const start = i;
+  while (i < body.length) {
+    const c = body[i]!;
+    if (c === 0x22) {
+      return decodeBasicEntities(body.subarray(start, i));
+    }
+    if (c === 0x5c && i + 1 < body.length) {
+      i = i + 2;
+      continue;
+    }
+    i = i + 1;
+  }
+  return EMPTY;
 }

@@ -22,7 +22,7 @@ A personal content collection desktop app for macOS. Throughout the day you enco
 | Manifest | `app.zon` |
 | Persistence | `Cmd.readFile` / `Cmd.writeFile` under `~/Library/Application Support/Sediment/` |
 | Capture | Clipboard polling via `Sub.timer` + `Cmd.clipboardRead` |
-| Previews | `Cmd.fetch` + OG/meta parse (`src/og.ts`); YouTube uses `hqdefault` (256 KiB fetch cap); thumbs register only on decode success |
+| Previews | `Cmd.fetch` + OG/meta parse (`src/og.ts`); YouTube uses oEmbed + `hqdefault`; GitHub uses JSON accept + resized opengraph (256 KiB fetch / 512² registry caps); thumbs register only on decode success |
 
 There is **no Electron, React, SQLite, or Node runtime** in the shipped binary. Master (`master` branch) still has the previous Electron implementation for behavioral reference — use `git show master:<path>` when porting behavior.
 

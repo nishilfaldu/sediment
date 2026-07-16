@@ -7,7 +7,7 @@
  * under bun we polyfill the few used by tag helpers.
  */
 import { parseOg, resolveAbsoluteUrl } from "../src/og.ts";
-import { resolveThumbnailUrl, youtubeVideoId } from "../src/tags.ts";
+import { githubRepoSlug, metaFetchUrl, resolveThumbnailUrl, youtubeVideoId } from "../src/tags.ts";
 import { decodeStore, encodeStore, type Item } from "../src/store.ts";
 import { EMPTY } from "../src/bytes.ts";
 
@@ -160,6 +160,21 @@ function testResolveAbsoluteUrl(): void {
   );
 }
 
+
+function testGithubAndMetaFetch(): void {
+  const repo = utf8("https://github.com/oven-sh/bun");
+  const slug = githubRepoSlug(repo);
+  assert(slug !== null && asText(slug!) === "oven-sh/bun", "github slug");
+  const thumb = asText(resolveThumbnailUrl(repo, utf8("")));
+  assert(thumb.startsWith("https://wsrv.nl/?url="), "github thumb via wsrv");
+  assert(thumb.includes("opengraph.githubassets.com"), "github opengraph target");
+
+  const watch = utf8("https://www.youtube.com/watch?v=aircAruvnKk");
+  const meta = asText(metaFetchUrl(watch));
+  assert(meta.includes("oembed"), "youtube uses oembed");
+  assert(meta.includes("aircAruvnKk"), "oembed carries video id");
+}
+
 function testYoutubeThumbs(): void {
   const watch = utf8("https://www.youtube.com/watch?v=abc123XYZ");
   const id = youtubeVideoId(watch);
@@ -183,4 +198,5 @@ testStoreRoundTrip();
 testOgParse();
 testResolveAbsoluteUrl();
 testYoutubeThumbs();
+testGithubAndMetaFetch();
 console.log("roundtrip: ok");

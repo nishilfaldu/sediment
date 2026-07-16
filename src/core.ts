@@ -39,7 +39,9 @@ import {
   formatDayHeading,
   formatDaySidebar,
   isVideoTag,
+  linkDisplayTitle,
   linkTagLabel,
+  metaFetchUrl,
   resolveThumbnailUrl,
 } from "./tags.ts";
 
@@ -420,15 +422,14 @@ export function visibleCards(model: Model): readonly CardRow[] {
 
   return filtered.map((it) => {
     if (it.type === "link") {
-      const hasTitle = it.title.length > 0;
-      const title = hasTitle ? it.title : it.sourceUrl;
+      const title = linkDisplayTitle(it.sourceUrl, it.title);
       const hasSubtitle = it.description.length > 0;
       const tag = linkTagLabel(it.sourceUrl);
       const imageId = lookupImageId(model.imageByItem, it.id);
       const domain = domainLabel(it.sourceUrl);
       const hasImage = imageId !== 0;
       const isVideo = isVideoTag(tag);
-      const awaitingMeta = !hasTitle && isAwaitingOg(model, it.id);
+      const awaitingMeta = it.title.length === 0 && isAwaitingOg(model, it.id);
       return {
         id: it.id,
         tag: tag,
@@ -746,7 +747,15 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
             Cmd.delay("autosave", AUTOSAVE_MS, "save_now"),
             Cmd.delay("toast", TOAST_MS, "toast_tick"),
             Cmd.fetch(
-              { url: url, method: "GET", headers: { "user-agent": "Sediment/2.0" }, timeoutMs: 8000 },
+              {
+                url: metaFetchUrl(url),
+                method: "GET",
+                headers: {
+                  "user-agent": "Sediment/2.0",
+                  accept: "application/json",
+                },
+                timeoutMs: 8000,
+              },
               { key: "og", ok: "og_ok", err: "og_err" },
             ),
           ]),
@@ -971,9 +980,12 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
             Cmd.delay("autosave", AUTOSAVE_MS, "save_now"),
             Cmd.fetch(
               {
-                url: rest[0].url,
+                url: metaFetchUrl(rest[0].url),
                 method: "GET",
-                headers: { "user-agent": "Sediment/2.0" },
+                headers: {
+                  "user-agent": "Sediment/2.0",
+                  accept: "application/json",
+                },
                 timeoutMs: 8000,
               },
               { key: "og", ok: "og_ok", err: "og_err" },
@@ -997,9 +1009,12 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
             Cmd.delay("autosave", AUTOSAVE_MS, "save_now"),
             Cmd.fetch(
               {
-                url: rest[0].url,
+                url: metaFetchUrl(rest[0].url),
                 method: "GET",
-                headers: { "user-agent": "Sediment/2.0" },
+                headers: {
+                  "user-agent": "Sediment/2.0",
+                  accept: "application/json",
+                },
                 timeoutMs: 8000,
               },
               { key: "og", ok: "og_ok", err: "og_err" },
@@ -1013,9 +1028,12 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
           Cmd.batch([
             Cmd.fetch(
               {
-                url: rest[0].url,
+                url: metaFetchUrl(rest[0].url),
                 method: "GET",
-                headers: { "user-agent": "Sediment/2.0" },
+                headers: {
+                  "user-agent": "Sediment/2.0",
+                  accept: "application/json",
+                },
                 timeoutMs: 8000,
               },
               { key: "og", ok: "og_ok", err: "og_err" },
@@ -1037,9 +1055,12 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
           next,
           Cmd.fetch(
             {
-              url: rest[0].url,
+              url: metaFetchUrl(rest[0].url),
               method: "GET",
-              headers: { "user-agent": "Sediment/2.0" },
+              headers: {
+                "user-agent": "Sediment/2.0",
+                accept: "application/json",
+              },
               timeoutMs: 8000,
             },
             { key: "og", ok: "og_ok", err: "og_err" },
@@ -1116,9 +1137,12 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
           Cmd.batch([
             Cmd.fetch(
               {
-                url: rest[0].url,
+                url: metaFetchUrl(rest[0].url),
                 method: "GET",
-                headers: { "user-agent": "Sediment/2.0" },
+                headers: {
+                  "user-agent": "Sediment/2.0",
+                  accept: "application/json",
+                },
                 timeoutMs: 8000,
               },
               { key: "og", ok: "og_ok", err: "og_err" },
@@ -1140,9 +1164,12 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
           next,
           Cmd.fetch(
             {
-              url: rest[0].url,
+              url: metaFetchUrl(rest[0].url),
               method: "GET",
-              headers: { "user-agent": "Sediment/2.0" },
+              headers: {
+                "user-agent": "Sediment/2.0",
+                accept: "application/json",
+              },
               timeoutMs: 8000,
             },
             { key: "og", ok: "og_ok", err: "og_err" },

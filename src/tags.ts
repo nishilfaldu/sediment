@@ -128,7 +128,8 @@ export function youtubeVideoId(url: Bytes): Bytes | null {
 }
 
 function youtubeHqdefault(yt: Bytes): Bytes {
-  // https://img.youtube.com/vi/<id>/hqdefault.jpg — small enough for Cmd.fetch's 256 KiB cap.
+  // https://img.youtube.com/vi/<id>/hqdefault.jpg — small enough for Cmd.fetch's 256 KiB cap
+  // and the 512×512 registry pixel bound (480×360).
   const prefix = asciiBytes("https://img.youtube.com/vi/");
   const suffix = asciiBytes("/hqdefault.jpg");
   const out = new Uint8Array(prefix.length + yt.length + suffix.length);
@@ -138,20 +139,147 @@ function youtubeHqdefault(yt: Bytes): Bytes {
   return out;
 }
 
+function startsWithBytes(hay: Bytes, prefix: Bytes): boolean {
+  if (hay.length < prefix.length) return false;
+  for (let i = 0; i < prefix.length; i++) {
+    if (hay[i] !== prefix[i]) return false;
+  }
+  return true;
+}
+
+/** owner/repo for github.com/owner/repo (and www.), else null. */
+export function githubRepoSlug(url: Bytes): Bytes | null {
+  const host = hostnameOf(url);
+  if (!(hostEquals(host, asciiBytes("github.com")) || hostEndsWith(host, asciiBytes(".github.com")))) {
+    return null;
+  }
+  const owner = pathFirstSegment(url);
+  if (owner === null || owner.length === 0) return null;
+  // Skip non-repo roots.
+  if (
+    bytesEq(owner, asciiBytes("settings")) ||
+    bytesEq(owner, asciiBytes("topics")) ||
+    bytesEq(owner, asciiBytes("explore")) ||
+    bytesEq(owner, asciiBytes("marketplace")) ||
+    bytesEq(owner, asciiBytes("orgs")) ||
+    bytesEq(owner, asciiBytes("users")) ||
+    bytesEq(owner, asciiBytes("login")) ||
+    bytesEq(owner, asciiBytes("signup"))
+  ) {
+    return null;
+  }
+  const repo = pathSecondSegment(url);
+  if (repo === null || repo.length === 0) return null;
+  const out = new Uint8Array(owner.length + 1 + repo.length);
+  out.set(owner, 0);
+  out[owner.length] = 0x2f;
+  out.set(repo, owner.length + 1);
+  return out;
+}
+
+function pathSecondSegment(url: Bytes): Bytes | null {
+  let start = 0;
+  if (url.startsWith(asciiBytes("https://"))) start = 8;
+  else if (url.startsWith(asciiBytes("http://"))) start = 7;
+  else return null;
+  while (start < url.length && url[start] !== 0x2f) start += 1;
+  if (start >= url.length) return null;
+  start += 1; // past host /
+  // skip first segment
+  while (start < url.length && url[start] !== 0x2f && url[start] !== 0x3f && url[start] !== 0x23) {
+    start += 1;
+  }
+  if (start >= url.length || url[start] !== 0x2f) return null;
+  start += 1;
+  let end = start;
+  while (end < url.length) {
+    const c = url[end];
+    if (c === 0x2f || c === 0x3f || c === 0x23) break;
+    end += 1;
+  }
+  if (end <= start) return null;
+  return url.subarray(start, end);
+}
+
+function githubOgImageUrl(slug: Bytes): Bytes {
+  // opengraph.githubassets.com/<any>/<owner>/<repo> serves the social card.
+  // Full-size RGBA exceeds the 1 MiB registry bound, so fetch via wsrv resize.
+  // Nested URL is unreserved ASCII (no query), so it can sit unencoded in ?url=.
+  const prefix = asciiBytes("https://wsrv.nl/?url=https://opengraph.githubassets.com/1/");
+  const suffix = asciiBytes("&w=480&output=jpg");
+  const out = new Uint8Array(prefix.length + slug.length + suffix.length);
+  out.set(prefix, 0);
+  out.set(slug, prefix.length);
+  out.set(suffix, prefix.length + slug.length);
+  return out;
+}
+
+/**
+ * Keep remote art inside the Native image registry (≤512×512 / 1 MiB RGBA).
+ * YouTube CDN thumbs are already small; GitHub opengraph cards are resized via wsrv.
+ */
+export function fitThumbUrl(imageUrl: Bytes): Bytes {
+  if (imageUrl.length === 0) return EMPTY;
+  if (startsWithBytes(imageUrl, asciiBytes("https://img.youtube.com/"))) return imageUrl;
+  if (startsWithBytes(imageUrl, asciiBytes("http://img.youtube.com/"))) return imageUrl;
+  if (startsWithBytes(imageUrl, asciiBytes("https://wsrv.nl/"))) return imageUrl;
+  if (startsWithBytes(imageUrl, asciiBytes("https://opengraph.githubassets.com/"))) {
+    const prefix = asciiBytes("https://wsrv.nl/?url=");
+    const suffix = asciiBytes("&w=480&output=jpg");
+    const out = new Uint8Array(prefix.length + imageUrl.length + suffix.length);
+    out.set(prefix, 0);
+    out.set(imageUrl, prefix.length);
+    out.set(suffix, prefix.length + imageUrl.length);
+    return out;
+  }
+  return imageUrl;
+}
+
+/**
+ * HTTP URL to fetch for title/description metadata.
+ * YouTube watch HTML is multi‑MB; oEmbed fits the 256 KiB Cmd.fetch cap.
+ */
+export function metaFetchUrl(sourceUrl: Bytes): Bytes {
+  const yt = youtubeVideoId(sourceUrl);
+  if (yt !== null) {
+    const prefix = asciiBytes("https://www.youtube.com/oembed?format=json&url=https://www.youtube.com/watch?v=");
+    const out = new Uint8Array(prefix.length + yt.length);
+    out.set(prefix, 0);
+    out.set(yt, prefix.length);
+    return out;
+  }
+  return sourceUrl;
+}
+
 /**
  * Resolve the thumbnail URL to fetch for a link.
- * YouTube always uses hqdefault (OG maxres often exceeds the 256 KiB fetch buffer).
- * Other hosts prefer stored OG art, else empty.
+ * YouTube → hqdefault; GitHub repos → resized opengraph card; else stored OG art
+ * (resized to fit the registry).
  */
 export function resolveThumbnailUrl(sourceUrl: Bytes, stored: Bytes): Bytes {
   const yt = youtubeVideoId(sourceUrl);
   if (yt !== null) return youtubeHqdefault(yt);
-  if (stored.length > 0) return stored;
+  const slug = githubRepoSlug(sourceUrl);
+  if (slug !== null) return githubOgImageUrl(slug);
+  if (stored.length > 0) return fitThumbUrl(stored);
   return EMPTY;
 }
-
 export function domainLabel(url: Bytes): Bytes {
   return hostnameOf(url);
+}
+
+/** Prefer OG title; for GitHub repos without meta, show `GitHub - owner/repo`. */
+export function linkDisplayTitle(sourceUrl: Bytes, storedTitle: Bytes): Bytes {
+  if (storedTitle.length > 0) return storedTitle;
+  const slug = githubRepoSlug(sourceUrl);
+  if (slug !== null) {
+    const prefix = asciiBytes("GitHub - ");
+    const out = new Uint8Array(prefix.length + slug.length);
+    out.set(prefix, 0);
+    out.set(slug, prefix.length);
+    return out;
+  }
+  return sourceUrl;
 }
 
 /** "Today" / "07-16" for the history rail (field-guide compact). */
