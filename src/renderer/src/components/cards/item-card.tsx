@@ -6,16 +6,17 @@ import type { Item } from '@/types'
 
 export interface ItemCardProps {
   item: Item
+  onNoteSave?: (note: string | null) => void
 }
 
-export function ItemCard({ item }: ItemCardProps): JSX.Element {
+export function ItemCard({ item, onNoteSave }: ItemCardProps): JSX.Element {
   if (item.type === 'link' && isAwaitingOgMetadata(item)) {
     return <CardSkeleton />
   }
 
   switch (item.type) {
     case 'link':
-      return <LinkCard item={item} />
+      return <LinkCard item={item} onNoteSave={onNoteSave} />
     case 'text':
       return <p className="p-4 text-sm text-muted">Unexpected text item in card view</p>
     default: {

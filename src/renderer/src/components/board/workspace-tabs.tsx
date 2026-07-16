@@ -21,7 +21,7 @@ export function WorkspaceTabs({ active, onChange }: WorkspaceTabsProps): JSX.Ele
             key={tab.id}
             type="button"
             onClick={() => onChange(tab.id)}
-            className={`border-b-2 pb-1.5 font-mono text-[12px] uppercase tracking-[0.2em] transition-colors ${
+            className={`app-no-drag border-b-2 pb-1.5 font-mono text-[12px] uppercase tracking-[0.2em] transition-colors ${
               isActive
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted hover:text-secondary'

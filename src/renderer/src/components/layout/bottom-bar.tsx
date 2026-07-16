@@ -1,6 +1,7 @@
 import type { JSX } from 'react'
 import { ChevronRightIcon } from '@/components/icons/chevron-right-icon'
 import { ExportMenu } from '@/components/layout/export-menu'
+import { SettingsMenu } from '@/components/layout/settings-menu'
 import { useWorkspaceItems } from '@/hooks/use-workspace-items'
 import { formatDayHeading, todayId } from '@/lib/dates'
 import { useCurrentDay } from '@/stores/current-day'
@@ -41,6 +42,7 @@ export function BottomBar(): JSX.Element {
 
       <div className="flex items-center gap-3">
         {(tab === 'links' ? linkCount : noteCount) > 0 && <ExportMenu dayId={dayId} />}
+        <SettingsMenu />
         {tab === 'links' && (
           <span className="hidden text-muted sm:inline">Copy a link to save</span>
         )}

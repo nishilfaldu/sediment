@@ -21,3 +21,18 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+html.capture-toast-root,
+body.capture-toast-root,
+.capture-toast-root #root {
+  background: transparent;
+}
+
+/* Frameless window: drag the chrome, click the controls. */
+.app-drag {
+  -webkit-app-region: drag;
+}
+
+.app-no-drag {
+  -webkit-app-region: no-drag;
+}

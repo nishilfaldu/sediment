@@ -4,20 +4,30 @@ import { TextBlock } from '@/components/blocks/text-block'
 import type { BoardItemProps } from '@/components/board/board-item-types'
 import { ItemCard } from '@/components/cards/item-card'
 import { CloseIcon } from '@/components/icons/close-icon'
-import { ContextMenu } from '@/components/ui/context-menu'
+import { ContextMenu, type ContextMenuEntry } from '@/components/ui/context-menu'
 import { useBoardItemHighlight } from '@/hooks/use-board-item-highlight'
+import { useShareActions } from '@/hooks/use-share-actions'
 
 export type { BoardItemProps } from '@/components/board/board-item-types'
 
-export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProps): JSX.Element {
+export function BoardItem({
+  item,
+  onDelete,
+  onUpdate,
+  onNoteSave,
+  selected = false,
+  onToggleSelect,
+  autoFocus
+}: BoardItemProps): JSX.Element {
   const elementRef = useRef<HTMLDivElement>(null)
   const { flash, isRecent } = useBoardItemHighlight(item.id, elementRef)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const share = useShareActions({ type: 'items', ids: [item.id] })
 
   function handleContextMenu(e: React.MouseEvent): void {
     e.preventDefault()
-    const MENU_W = 128
-    const MENU_H = 44
+    const MENU_W = 180
+    const MENU_H = 220
     setContextMenu({
       x: Math.min(e.clientX, window.innerWidth - MENU_W),
       y: Math.min(e.clientY, window.innerHeight - MENU_H)
@@ -31,9 +41,75 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
     onDelete()
   }
 
+  function handleClick(e: React.MouseEvent): void {
+    if (!onToggleSelect) return
+    if (e.metaKey || e.ctrlKey) {
+      e.preventDefault()
+      onToggleSelect()
+    }
+  }
+
+  function closeMenu(): void {
+    setContextMenu(null)
+  }
+
+  function menuEntries(): ContextMenuEntry[] {
+    return [
+      {
+        type: 'action',
+        id: 'copy-friend',
+        label: 'Copy for a friend',
+        onClick: () => {
+          closeMenu()
+          void share.copyForFriend()
+        }
+      },
+      {
+        type: 'action',
+        id: 'copy-md',
+        label: 'Copy as Markdown',
+        onClick: () => {
+          closeMenu()
+          void share.copyMarkdown()
+        }
+      },
+      { type: 'separator', id: 'sep-share' },
+      {
+        type: 'action',
+        id: 'chatgpt',
+        label: 'Open in ChatGPT',
+        onClick: () => {
+          closeMenu()
+          share.openInAi('chatgpt')
+        }
+      },
+      {
+        type: 'action',
+        id: 'claude',
+        label: 'Open in Claude',
+        onClick: () => {
+          closeMenu()
+          share.openInAi('claude')
+        }
+      },
+      { type: 'separator', id: 'sep-delete' },
+      {
+        type: 'action',
+        id: 'delete',
+        label: 'Delete',
+        danger: true,
+        onClick: () => {
+          closeMenu()
+          onDelete()
+        }
+      }
+    ]
+  }
+
   const shellClass = [
     'group relative outline-none',
     flash ? 'ring-2 ring-moss ring-offset-2 ring-offset-surface' : 'min-w-0',
+    selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface' : '',
     isRecent ? 'animate-item-enter' : ''
   ]
     .filter(Boolean)
@@ -49,6 +125,7 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
         className={shellClass}
         onContextMenu={handleContextMenu}
         onKeyDown={handleKeyDown}
+        onClick={handleClick}
       >
         <button
           type="button"
@@ -70,7 +147,7 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
           </div>
         ) : (
           <div className="overflow-hidden border border-ui bg-card shadow-hard transition-shadow hover:shadow-hard-hover">
-            <ItemCard item={item} />
+            <ItemCard item={item} onNoteSave={onNoteSave} />
           </div>
         )}
       </div>
@@ -79,11 +156,8 @@ export function BoardItem({ item, onDelete, onUpdate, autoFocus }: BoardItemProp
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          onDelete={() => {
-            setContextMenu(null)
-            onDelete()
-          }}
-          onDismiss={() => setContextMenu(null)}
+          entries={menuEntries()}
+          onDismiss={closeMenu}
         />
       )}
     </>

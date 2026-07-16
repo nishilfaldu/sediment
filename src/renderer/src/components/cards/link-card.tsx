@@ -2,12 +2,14 @@ import { getLinkPresentation, youtubeVideoId } from '@shared/link-presentation'
 import type { JSX } from 'react'
 import { CardOpenButton } from '@/components/cards/card-open-button'
 import { CardThumbnail } from '@/components/cards/card-thumbnail'
+import { LinkNote } from '@/components/cards/link-note'
 import { PlayIcon } from '@/components/icons/play-icon'
 import { SpecimenTag } from '@/components/ui/specimen-tag'
 import type { Item } from '@/types'
 
 export interface LinkCardProps {
   item: Item
+  onNoteSave?: (note: string | null) => void
 }
 
 function domain(url: string): string {
@@ -18,7 +20,7 @@ function domain(url: string): string {
   }
 }
 
-export function LinkCard({ item }: LinkCardProps): JSX.Element {
+export function LinkCard({ item, onNoteSave }: LinkCardProps): JSX.Element {
   const url = item.sourceUrl ?? ''
   const presentation = url ? getLinkPresentation(url) : { kind: 'link' as const, tagLabel: 'link' }
   const isVideo = presentation.kind === 'video'
@@ -60,6 +62,8 @@ export function LinkCard({ item }: LinkCardProps): JSX.Element {
         {item.description && (
           <p className="text-xs leading-relaxed text-secondary line-clamp-3">{item.description}</p>
         )}
+
+        {onNoteSave && <LinkNote value={item.content} onSave={onNoteSave} />}
 
         <div className="flex items-center justify-between pt-1">
           {!thumbnail ? (

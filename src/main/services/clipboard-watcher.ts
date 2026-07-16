@@ -3,7 +3,9 @@ import { todayId } from '@shared/dates'
 import type { DetectedLink } from '@shared/detect-url'
 import { detectUrl } from '@shared/detect-url'
 import { type BrowserWindow, clipboard, ipcMain } from 'electron'
+import { registerCaptureToast, showCaptureOverlay, showDuplicateOverlay } from './capture-toast'
 import { createItemRecord, hasSourceUrlOnDay } from './create-item'
+import { isMainWindowForeground } from './main-window'
 
 const POLL_MS = 500
 const SUPPRESS_MS = 30_000
@@ -45,8 +47,13 @@ function notifyCapture(win: BrowserWindow, payload: ClipboardCapturePayload): vo
   win.webContents.send('clipboard:captured', payload)
 }
 
-function notifyDuplicate(win: BrowserWindow, dayId: string, sourceUrl: string): void {
-  win.webContents.send('clipboard:duplicate', { dayId, sourceUrl })
+function notifyDuplicate(
+  win: BrowserWindow,
+  dayId: string,
+  sourceUrl: string,
+  showInAppToast: boolean
+): void {
+  win.webContents.send('clipboard:duplicate', { dayId, sourceUrl, showInAppToast })
 }
 
 type CaptureResult = 'captured' | 'duplicate' | 'skipped'
@@ -56,13 +63,16 @@ function captureUrlToToday(
   getWindow: () => BrowserWindow | null
 ): CaptureResult {
   const dayId = todayId()
+  const win = getWindow()
+  const foreground = isMainWindowForeground(win)
 
   if (hasSourceUrlOnDay(dayId, detected.sourceUrl)) {
-    const win = getWindow()
-    if (win && lastDuplicateUrl !== detected.sourceUrl) {
-      lastDuplicateUrl = detected.sourceUrl
-      notifyDuplicate(win, dayId, detected.sourceUrl)
+    if (lastDuplicateUrl === detected.sourceUrl) return 'duplicate'
+    lastDuplicateUrl = detected.sourceUrl
+    if (win) {
+      notifyDuplicate(win, dayId, detected.sourceUrl, foreground)
     }
+    if (!foreground) showDuplicateOverlay(detected.sourceUrl)
     return 'duplicate'
   }
 
@@ -75,14 +85,22 @@ function captureUrlToToday(
     content: null
   })
 
-  const win = getWindow()
-  if (!win) return 'skipped'
+  if (win) {
+    notifyCapture(win, {
+      id: item.id,
+      dayId: item.dayId,
+      sourceUrl: detected.sourceUrl,
+      showInAppToast: foreground
+    })
+  }
 
-  notifyCapture(win, {
-    id: item.id,
-    dayId: item.dayId,
-    sourceUrl: detected.sourceUrl
-  })
+  if (!foreground) {
+    showCaptureOverlay({
+      id: item.id,
+      dayId: item.dayId,
+      sourceUrl: detected.sourceUrl
+    })
+  }
 
   return 'captured'
 }
@@ -105,6 +123,11 @@ export function registerClipboardWatcher(getWindow: () => BrowserWindow | null):
   if (pollTimer) return
 
   lastClipboardText = clipboard.readText().trim()
+
+  registerCaptureToast({
+    getMainWindow: getWindow,
+    suppressUrl: suppressClipboardUrl
+  })
 
   ipcMain.handle('clipboard:suppress', (_e, url: string) => {
     suppressClipboardUrl(url)
