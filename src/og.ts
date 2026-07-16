@@ -2,6 +2,8 @@ import { asciiBytes } from "@native-sdk/core";
 import {
   EMPTY,
   bytesEqualIgnoreCase,
+  concat2,
+  concat3,
   indexOfBytesIgnoreCase,
   type Bytes,
 } from "./bytes.ts";
@@ -184,14 +186,6 @@ function titleTag(html: Bytes): Bytes {
   return decodeBasicEntities(html.subarray(gt + 1, close));
 }
 
-function startsWithAscii(bytes: Bytes, prefix: Bytes): boolean {
-  if (bytes.length < prefix.length) return false;
-  for (let i = 0; i < prefix.length; i++) {
-    if (bytes[i] !== prefix[i]) return false;
-  }
-  return true;
-}
-
 /**
  * Resolve protocol-relative, root-relative, and path-relative URLs against the page URL.
  * Absolute http(s) URLs pass through unchanged.
@@ -201,17 +195,17 @@ export function resolveAbsoluteUrl(pageUrl: Bytes, ref: Bytes): Bytes {
   if (trimmed.length === 0) return EMPTY;
 
   if (
-    startsWithAscii(trimmed, asciiBytes("https://")) ||
-    startsWithAscii(trimmed, asciiBytes("http://"))
+    trimmed.startsWith(asciiBytes("https://")) ||
+    trimmed.startsWith(asciiBytes("http://"))
   ) {
     return trimmed;
   }
 
-  if (startsWithAscii(trimmed, asciiBytes("//"))) {
-    if (startsWithAscii(pageUrl, asciiBytes("http://"))) {
-      return concatPrefix(asciiBytes("http:"), trimmed);
+  if (trimmed.startsWith(asciiBytes("//"))) {
+    if (pageUrl.startsWith(asciiBytes("http://"))) {
+      return concat2(asciiBytes("http:"), trimmed);
     }
-    return concatPrefix(asciiBytes("https:"), trimmed);
+    return concat2(asciiBytes("https:"), trimmed);
   }
 
   const schemeSep = indexOfBytesIgnoreCase(pageUrl, asciiBytes("://"), 0);
@@ -224,8 +218,8 @@ export function resolveAbsoluteUrl(pageUrl: Bytes, ref: Bytes): Bytes {
   }
   const origin = pageUrl.subarray(0, pathStart);
 
-  if (startsWithAscii(trimmed, asciiBytes("/"))) {
-    return concatPrefix(origin, trimmed);
+  if (trimmed.startsWith(asciiBytes("/"))) {
+    return concat2(origin, trimmed);
   }
 
   let basePath: Bytes;
@@ -246,21 +240,6 @@ export function resolveAbsoluteUrl(pageUrl: Bytes, ref: Bytes): Bytes {
   }
   const dir = basePath.subarray(0, dirEnd);
   return concat3(origin, dir, trimmed);
-}
-
-function concatPrefix(a: Bytes, b: Bytes): Bytes {
-  const out = new Uint8Array(a.length + b.length);
-  out.set(a, 0);
-  out.set(b, a.length);
-  return out;
-}
-
-function concat3(a: Bytes, b: Bytes, c: Bytes): Bytes {
-  const out = new Uint8Array(a.length + b.length + c.length);
-  out.set(a, 0);
-  out.set(b, a.length);
-  out.set(c, a.length + b.length);
-  return out;
 }
 
 /** Best-effort Open Graph / Twitter / title extraction from an HTML body. */

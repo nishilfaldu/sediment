@@ -32,13 +32,16 @@ There is **no Electron, React, SQLite, or Node runtime** in the shipped binary. 
 
 ```
 src/core.ts     Model, Msg, update, subscriptions, binding helpers
+src/derive.ts   Board/history/search view projections over Model
+src/images.ts   Canvas ImageId slot allocation (1..15)
+src/previews.ts Thumbnail queue helpers (enqueue / warm / OG thumb URL)
 src/app.native  Entire UI (field-guide shell: board left, history right)
 src/theme.zig   Sediment paper/ink/moss DesignTokens + Archivo/Plex/Besley ids
 src/wire.zig    App-owned TsUiApp wiring — tokens, fonts, thumb image register
 assets/fonts/   Bundled field-guide TTFs (staged into `.native/gen/fonts/`)
 src/store.ts    Encode/decode durable item store
-src/detect.ts   URL detection
-src/tags.ts     Link specimen tags from hostname
+src/detect.ts   URL detection + path/query helpers
+src/tags.ts     Link specimen tags, video hosts, meta/thumb URL policy
 src/og.ts       Open Graph / title extraction from HTML bytes
 src/bytes.ts    Byte helpers (concat, decimal, search)
 build.zig       Ejected graph: stages wire+theme into `.native/gen/`, transpiles core

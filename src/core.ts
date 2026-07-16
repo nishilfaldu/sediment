@@ -8,16 +8,12 @@ import {
   EMPTY,
   bytesEqual,
   concat2,
-  concat3,
-  containsIgnoreCaseAscii,
-  decimalBytes,
   trimAscii,
   type Bytes,
 } from "./bytes.ts";
 import {
   hasUrlOnDay,
   isSuppressed,
-  itemsForDay,
   itemsWithOg,
   makeLinkItem,
   makeNoteItem,
@@ -27,7 +23,29 @@ import {
   type Toast,
 } from "./capture.ts";
 import { detectUrl } from "./detect.ts";
+import {
+  buildBoardColumns,
+  buildCurrentDayLabel,
+  buildDayRows,
+  buildSearchHits,
+  buildStatusText,
+  buildVisibleCards,
+  type CardRow,
+  type DayRow,
+  type SearchHit,
+} from "./derive.ts";
 import { applyField, fieldInit, type FieldDraft } from "./field.ts";
+import {
+  upsertImageSlot,
+  type ImageSlot,
+} from "./images.ts";
+import {
+  AUTOSAVE_MS,
+  enqueueThumb,
+  thumbUrlForOgHead,
+  warmThumbQueue,
+  type ThumbJob,
+} from "./previews.ts";
 import {
   decodeStore,
   encodeStore,
@@ -35,59 +53,13 @@ import {
   type StoreSnapshot,
 } from "./store.ts";
 import {
-  domainLabel,
-  formatDayHeading,
-  formatDaySidebar,
-  isVideoTag,
-  linkDisplayTitle,
-  linkTagLabel,
   metaFetchUrl,
   resolveThumbnailUrl,
 } from "./tags.ts";
 
 export type Tab = "links" | "notes";
 
-export interface DayRow {
-  readonly id: Bytes;
-  readonly count: number;
-  readonly label: Bytes;
-  readonly selected: boolean;
-}
-
-export interface CardRow {
-  readonly id: Bytes;
-  readonly tag: Bytes;
-  readonly title: Bytes;
-  readonly subtitle: Bytes;
-  readonly url: Bytes;
-  readonly domain: Bytes;
-  readonly imageId: number;
-  readonly isLink: boolean;
-  readonly hasSubtitle: boolean;
-  readonly hasUrlLine: boolean;
-  readonly hasImage: boolean;
-  readonly hasDomain: boolean;
-  readonly isVideo: boolean;
-  /** Still waiting on OG (show skeleton like Electron). */
-  readonly awaitingMeta: boolean;
-  /** Electron footer: specimen tag when there is no thumbnail. */
-  readonly showTagFooter: boolean;
-  /** Electron footer: domain when thumbnail is present and not video. */
-  readonly showDomainFooter: boolean;
-}
-
-export interface ThumbJob {
-  readonly id: Bytes;
-  readonly url: Bytes;
-  readonly imageId: number;
-}
-
-export interface SearchHit {
-  readonly id: Bytes;
-  readonly dayId: Bytes;
-  readonly label: Bytes;
-  readonly detail: Bytes;
-}
+export type { CardRow, DayRow, SearchHit };
 
 export interface Model {
   readonly ready: boolean;
@@ -122,16 +94,10 @@ export interface Model {
   readonly imageByItem: readonly ImageSlot[];
 }
 
-export interface ImageSlot {
-  readonly id: Bytes;
-  readonly imageId: number;
-}
-
 const MAX_DRAFT = 8000;
 const MAX_SEARCH = 200;
 const CLIPBOARD_MS = 500;
 const TOAST_MS = 8000;
-const AUTOSAVE_MS = 600;
 const SUPPRESS_MS = 30000;
 const HEADER_HEIGHT_MIN = 52;
 const STORE_REL = asciiBytes("/Library/Application Support/Sediment/store.v1");
@@ -279,235 +245,24 @@ export function initialModel(): Model {
   return emptyModel();
 }
 
-function concatHay(parts: readonly Bytes[]): Bytes {
-  let total = 0;
-  for (const p of parts) total += p.length + 1;
-  const out = new Uint8Array(total);
-  let at = 0;
-  for (const p of parts) {
-    out.set(p, at);
-    at += p.length;
-    out[at] = 0x20;
-    at += 1;
-  }
-  return out;
-}
-
 export function dayRows(model: Model): readonly DayRow[] {
-  const mapIds: Bytes[] = [];
-  const mapCounts: number[] = [];
-  for (const it of model.items) {
-    let idx = -1;
-    for (let i = 0; i < mapIds.length; i++) {
-      if (bytesEqual(mapIds[i], it.dayId)) {
-        idx = i;
-        break;
-      }
-    }
-    if (idx < 0) {
-      mapIds.push(it.dayId);
-      mapCounts.push(1);
-    } else {
-      mapCounts[idx] = mapCounts[idx] + 1;
-    }
-  }
-
-  let hasToday = false;
-  for (const id of mapIds) {
-    if (bytesEqual(id, model.todayId)) {
-      hasToday = true;
-      break;
-    }
-  }
-  if (!hasToday) {
-    mapIds.push(model.todayId);
-    mapCounts.push(0);
-  }
-
-  const rows: DayRow[] = [];
-  for (let i = 0; i < mapIds.length; i++) {
-    if (!bytesEqual(mapIds[i], model.todayId)) continue;
-    rows.push({
-      id: mapIds[i],
-      count: mapCounts[i],
-      label: formatDaySidebar(mapIds[i], model.todayId),
-      selected: bytesEqual(mapIds[i], model.currentDayId),
-    });
-  }
-  for (let i = 0; i < mapIds.length; i++) {
-    if (bytesEqual(mapIds[i], model.todayId)) continue;
-    rows.push({
-      id: mapIds[i],
-      count: mapCounts[i],
-      label: formatDaySidebar(mapIds[i], model.todayId),
-      selected: bytesEqual(mapIds[i], model.currentDayId),
-    });
-  }
-  return rows;
-}
-
-/** Canvas image registry has 16 slots; we use 1..15 for fetched thumbs. */
-const IMAGE_SLOT_MAX = 15;
-
-interface AllocImage {
-  readonly imageId: number;
-  readonly nextImageSlot: number;
-  readonly imageByItem: readonly ImageSlot[];
-}
-
-/**
- * Allocate the next canvas ImageId (1..15). Reusing a slot clears any prior
- * item mapping that pointed at it — avoids colliding art when many cards share ids.
- */
-function allocImageSlot(
-  nextImageSlot: number,
-  imageByItem: readonly ImageSlot[],
-  itemId: Bytes,
-): AllocImage {
-  const imageId = nextImageSlot;
-  let nextSlot = imageId + 1;
-  if (nextSlot > IMAGE_SLOT_MAX) nextSlot = 1;
-
-  const next: ImageSlot[] = [];
-  for (const slot of imageByItem) {
-    if (bytesEqual(slot.id, itemId)) continue;
-    if (slot.imageId === imageId) continue;
-    next.push(slot);
-  }
-  return {
-    imageId: imageId,
-    nextImageSlot: nextSlot,
-    imageByItem: next,
-  };
-}
-
-function lookupImageId(slots: readonly ImageSlot[], id: Bytes): number {
-  for (const slot of slots) {
-    if (bytesEqual(slot.id, id)) return slot.imageId;
-  }
-  return 0;
-}
-
-function upsertImageSlot(slots: readonly ImageSlot[], id: Bytes, imageId: number): readonly ImageSlot[] {
-  const next: ImageSlot[] = [];
-  let found = false;
-  for (const slot of slots) {
-    if (bytesEqual(slot.id, id)) {
-      next.push({ id: id, imageId: imageId });
-      found = true;
-    } else if (slot.imageId === imageId) {
-      // Slot reuse: drop the previous owner of this ImageId.
-      continue;
-    } else {
-      next.push(slot);
-    }
-  }
-  if (!found) next.push({ id: id, imageId: imageId });
-  return next;
-}
-
-function isAwaitingOg(model: Model, itemId: Bytes): boolean {
-  for (const job of model.ogQueue) {
-    if (bytesEqual(job.id, itemId)) return true;
-  }
-  return false;
+  return buildDayRows(model);
 }
 
 export function visibleCards(model: Model): readonly CardRow[] {
-  const dayItems = itemsForDay(model.items, model.currentDayId);
-  const filtered =
-    model.tab === "links"
-      ? dayItems.filter((it) => it.type === "link")
-      : dayItems.filter((it) => it.type === "text");
-
-  return filtered.map((it) => {
-    if (it.type === "link") {
-      const title = linkDisplayTitle(it.sourceUrl, it.title);
-      const hasSubtitle = it.description.length > 0;
-      const tag = linkTagLabel(it.sourceUrl);
-      const imageId = lookupImageId(model.imageByItem, it.id);
-      const domain = domainLabel(it.sourceUrl);
-      const hasImage = imageId !== 0;
-      const isVideo = isVideoTag(tag);
-      const awaitingMeta = it.title.length === 0 && isAwaitingOg(model, it.id);
-      return {
-        id: it.id,
-        tag: tag,
-        title: title,
-        subtitle: hasSubtitle ? it.description : EMPTY,
-        url: it.sourceUrl,
-        domain: domain,
-        imageId: imageId,
-        isLink: true,
-        hasSubtitle: hasSubtitle,
-        hasUrlLine: false,
-        hasImage: hasImage,
-        hasDomain: domain.length > 0,
-        isVideo: isVideo,
-        awaitingMeta: awaitingMeta,
-        // Electron footer: tag if no thumb; domain if thumb and not video.
-        showTagFooter: !hasImage,
-        showDomainFooter: hasImage && !isVideo && domain.length > 0,
-      };
-    }
-    return {
-      id: it.id,
-      tag: asciiBytes("NOTE"),
-      title: it.content,
-      subtitle: EMPTY,
-      url: EMPTY,
-      domain: EMPTY,
-      imageId: 0,
-      isLink: false,
-      hasSubtitle: false,
-      hasUrlLine: false,
-      hasImage: false,
-      hasDomain: false,
-      isVideo: false,
-      awaitingMeta: false,
-      showTagFooter: false,
-      showDomainFooter: false,
-    };
-  });
+  return buildVisibleCards(model);
 }
 
 export function searchHits(model: Model): readonly SearchHit[] {
-  const q = trimAscii(model.searchDraft.bytes);
-  if (q.length === 0) return [];
-  const hits: SearchHit[] = [];
-  for (const it of model.items) {
-    const hay = concatHay([it.title, it.description, it.content, it.sourceUrl]);
-    if (!containsIgnoreCaseAscii(hay, q)) continue;
-    hits.push({
-      id: it.id,
-      dayId: it.dayId,
-      label: it.type === "link" ? (it.title.length > 0 ? it.title : it.sourceUrl) : it.content,
-      detail: it.dayId,
-    });
-    if (hits.length >= 40) break;
-  }
-  return hits;
+  return buildSearchHits(model);
 }
 
 export function currentDayLabel(model: Model): Bytes {
-  return formatDayHeading(model.currentDayId, model.todayId);
+  return buildCurrentDayLabel(model);
 }
 
 export function boardColumns(model: Model): number {
-  // Electron: grid-cols-[repeat(auto-fill,minmax(260px,1fr))] with history rail.
-  const history = 200;
-  const pad = 48;
-  const gap = 16;
-  const minTile = 260;
-  const available = model.boardWidth - history - pad;
-  if (available < minTile) return 1;
-  let cols = 1;
-  let used = minTile;
-  while (used + gap + minTile <= available) {
-    cols += 1;
-    used += gap + minTile;
-  }
-  return cols;
+  return buildBoardColumns(model);
 }
 
 export function linksSelected(model: Model): boolean {
@@ -539,15 +294,7 @@ export function toastCanUndo(model: Model): boolean {
 }
 
 export function statusText(model: Model): Bytes {
-  if (!model.ready) return asciiBytes("Loading...");
-  let n = 0;
-  for (const it of model.items) {
-    if (bytesEqual(it.dayId, model.currentDayId)) n += 1;
-  }
-  // Avoid `.length` on filtered slices + keep the line 7-bit ASCII.
-  if (n === 0) return concat2(asciiBytes("No items - "), currentDayLabel(model));
-  if (n === 1) return concat2(asciiBytes("1 item - "), currentDayLabel(model));
-  return concat3(decimalBytes(n), asciiBytes(" items - "), currentDayLabel(model));
+  return buildStatusText(model);
 }
 
 export function noteText(model: Model): Bytes {
@@ -601,50 +348,34 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
     case "store_loaded": {
       const parsed = decodeStore(msg.body);
       if (parsed === null) return { ...model, ready: true };
-      // Warm thumbnail fetches for links that already have OG art (or YT).
-      const thumbQueue: ThumbJob[] = [];
-      let nextImageSlot = model.nextImageSlot;
-      let imageByItem = model.imageByItem;
-      for (const it of parsed.items) {
-        if (it.type !== "link") continue;
-        const thumbUrl = resolveThumbnailUrl(it.sourceUrl, it.thumbnail);
-        if (thumbUrl.length === 0) continue;
-        const alloc = allocImageSlot(nextImageSlot, imageByItem, it.id);
-        nextImageSlot = alloc.nextImageSlot;
-        imageByItem = alloc.imageByItem;
-        thumbQueue.push({
-          id: it.id,
-          url: thumbUrl,
-          imageId: alloc.imageId,
-        });
-        if (thumbQueue.length >= IMAGE_SLOT_MAX) break;
-      }
-      if (thumbQueue.length === 0) {
+      const warmed = warmThumbQueue(parsed.items, model.nextImageSlot, model.imageByItem);
+      if (warmed.thumbQueue.length === 0) {
         return {
           ...model,
           ready: true,
           nextId: parsed.nextId,
           items: parsed.items,
           dirty: false,
-          nextImageSlot: nextImageSlot,
-          imageByItem: imageByItem,
+          nextImageSlot: warmed.nextImageSlot,
+          imageByItem: warmed.imageByItem,
         };
       }
+      const next: Model = {
+        ...model,
+        ready: true,
+        nextId: parsed.nextId,
+        items: parsed.items,
+        dirty: false,
+        thumbQueue: warmed.thumbQueue,
+        pendingThumbImageId: warmed.thumbQueue[0].imageId,
+        nextImageSlot: warmed.nextImageSlot,
+        imageByItem: warmed.imageByItem,
+      };
       return [
-        {
-          ...model,
-          ready: true,
-          nextId: parsed.nextId,
-          items: parsed.items,
-          dirty: false,
-          thumbQueue: thumbQueue,
-          pendingThumbImageId: thumbQueue[0].imageId,
-          nextImageSlot: nextImageSlot,
-          imageByItem: imageByItem,
-        },
+        next,
         Cmd.fetch(
           {
-            url: thumbQueue[0].url,
+            url: warmed.thumbQueue[0].url,
             method: "GET",
             headers: { "user-agent": "Sediment/2.0" },
             timeoutMs: 8000,
@@ -930,49 +661,42 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
           items = patched;
           dirty = true;
         }
-        let thumbUrl = EMPTY;
-        for (const it of items) {
-          if (!bytesEqual(it.id, head.id)) continue;
-          thumbUrl = resolveThumbnailUrl(it.sourceUrl, it.thumbnail);
-          break;
-        }
-        if (thumbUrl.length === 0) {
-          thumbUrl = resolveThumbnailUrl(head.url, EMPTY);
-        }
-        if (thumbUrl.length > 0) {
-          const alloc = allocImageSlot(nextImageSlot, imageByItem, head.id);
-          nextImageSlot = alloc.nextImageSlot;
-          imageByItem = alloc.imageByItem;
-          thumbQueue = [
-            ...thumbQueue,
-            { id: head.id, url: thumbUrl, imageId: alloc.imageId },
-          ];
-        }
+        const enq = enqueueThumb(
+          nextImageSlot,
+          imageByItem,
+          thumbQueue,
+          head.id,
+          thumbUrlForOgHead(items, head),
+        );
+        nextImageSlot = enq.nextImageSlot;
+        imageByItem = enq.imageByItem;
+        thumbQueue = enq.thumbQueue;
       } else {
         // Non-2xx/3xx: still try YouTube hqdefault when the URL is a video.
-        const thumbUrl = resolveThumbnailUrl(head.url, EMPTY);
-        if (thumbUrl.length > 0) {
-          const alloc = allocImageSlot(nextImageSlot, imageByItem, head.id);
-          nextImageSlot = alloc.nextImageSlot;
-          imageByItem = alloc.imageByItem;
-          thumbQueue = [
-            ...thumbQueue,
-            { id: head.id, url: thumbUrl, imageId: alloc.imageId },
-          ];
-        }
+        const enq = enqueueThumb(
+          nextImageSlot,
+          imageByItem,
+          thumbQueue,
+          head.id,
+          resolveThumbnailUrl(head.url, EMPTY),
+        );
+        nextImageSlot = enq.nextImageSlot;
+        imageByItem = enq.imageByItem;
+        thumbQueue = enq.thumbQueue;
       }
       const startThumb = model.thumbQueue.length === 0 && thumbQueue.length > 0;
-      const pendingThumbImageId = startThumb ? thumbQueue[0].imageId : model.pendingThumbImageId;
       const next: Model = {
         ...model,
         items: items,
         ogQueue: rest,
         dirty: dirty,
         thumbQueue: thumbQueue,
-        pendingThumbImageId: pendingThumbImageId,
+        pendingThumbImageId: startThumb ? thumbQueue[0].imageId : model.pendingThumbImageId,
         nextImageSlot: nextImageSlot,
         imageByItem: imageByItem,
       };
+      // Cmd must be constructed inline in update's return (NS1017) — shared
+      // fetch builders are illegal; the boolean tree stays here by design.
       if (rest.length > 0 && dirty && startThumb) {
         return [
           next,
@@ -1107,29 +831,21 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
       if (model.ogQueue.length === 0) return model;
       const head = model.ogQueue[0];
       const rest = model.ogQueue.slice(1);
-      let thumbQueue = model.thumbQueue;
-      let nextImageSlot = model.nextImageSlot;
-      let imageByItem = model.imageByItem;
-      // Network/parse failure: still queue YouTube hqdefault when applicable.
-      const thumbUrl = resolveThumbnailUrl(head.url, EMPTY);
-      if (thumbUrl.length > 0) {
-        const alloc = allocImageSlot(nextImageSlot, imageByItem, head.id);
-        nextImageSlot = alloc.nextImageSlot;
-        imageByItem = alloc.imageByItem;
-        thumbQueue = [
-          ...thumbQueue,
-          { id: head.id, url: thumbUrl, imageId: alloc.imageId },
-        ];
-      }
-      const startThumb = model.thumbQueue.length === 0 && thumbQueue.length > 0;
-      const pendingThumbImageId = startThumb ? thumbQueue[0].imageId : model.pendingThumbImageId;
+      const enq = enqueueThumb(
+        model.nextImageSlot,
+        model.imageByItem,
+        model.thumbQueue,
+        head.id,
+        resolveThumbnailUrl(head.url, EMPTY),
+      );
+      const startThumb = model.thumbQueue.length === 0 && enq.thumbQueue.length > 0;
       const next: Model = {
         ...model,
         ogQueue: rest,
-        thumbQueue: thumbQueue,
-        pendingThumbImageId: pendingThumbImageId,
-        nextImageSlot: nextImageSlot,
-        imageByItem: imageByItem,
+        thumbQueue: enq.thumbQueue,
+        pendingThumbImageId: startThumb ? enq.thumbQueue[0].imageId : model.pendingThumbImageId,
+        nextImageSlot: enq.nextImageSlot,
+        imageByItem: enq.imageByItem,
       };
       if (rest.length > 0 && startThumb) {
         return [
@@ -1149,7 +865,7 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
             ),
             Cmd.fetch(
               {
-                url: thumbQueue[0].url,
+                url: enq.thumbQueue[0].url,
                 method: "GET",
                 headers: { "user-agent": "Sediment/2.0" },
                 timeoutMs: 8000,
@@ -1181,7 +897,7 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
           next,
           Cmd.fetch(
             {
-              url: thumbQueue[0].url,
+              url: enq.thumbQueue[0].url,
               method: "GET",
               headers: { "user-agent": "Sediment/2.0" },
               timeoutMs: 8000,
@@ -1252,6 +968,10 @@ export function update(model: Model, msg: Msg): Model | [Model, Cmd<Msg>] {
           { key: "thumb", ok: "thumb_ok", err: "thumb_err" },
         ),
       ];
+    }
+    default: {
+      const _exhaustive: never = msg;
+      return model;
     }
   }
 }
