@@ -15,7 +15,12 @@ mac:
   category: public.app-category.productivity
   entitlementsInherit: build/entitlements.mac.plist
   target:
+    # dmg = website / first install; zip = in-app updater swap
     - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
       arch:
         - arm64
         - x64
@@ -29,9 +34,13 @@ dmg:
       y: 180
       type: link
       path: /Applications
+# Zip used by the in-app updater to replace Sediment.app without a browser download.
+zip:
+  artifactName: ${name}-${version}-${arch}-mac.${ext}
 npmRebuild: true
 publish:
   provider: github
   owner: nishilfaldu
   repo: sediment
-  publishAutoUpdate: false
+  # latest-mac.yml is published for tooling; the app updater uses the zip assets directly.
+  publishAutoUpdate: true

@@ -76,7 +76,9 @@ bun run check              # Biome lint + format (run before committing)
 bun run typecheck          # tsc across main + renderer
 ```
 
-Requires `VITE_CONVEX_URL` in `.env.local` (written by `convex dev`) and `AUTH_RESEND_KEY` on the Convex deployment.
+Requires `VITE_CONVEX_URL` in `.env.local` (written by `convex dev`) for local development, and `AUTH_RESEND_KEY` on the Convex deployment.
+
+**Dev vs prod:** `.env.local` → personal **dev** deployment. `.env.production` (committed) → **prod** (`bright-lark-824`) and is what `electron-vite build` / GitHub releases bake in. Push backend with `bunx convex deploy` (never during casual coding). Marketing-site download gate must POST to the **prod** `.convex.site` URL (`https://bright-lark-824.convex.site/download`), not the dev firefly deployment.
 
 ---
 
@@ -90,9 +92,9 @@ Requires `VITE_CONVEX_URL` in `.env.local` (written by `convex dev`) and `AUTH_R
   `CSC_LINK`, and `CSC_KEY_PASSWORD` set, builds are Developer ID signed and notarized
   (opens normally). Without those secrets, ad-hoc signing is used and users must bypass
   Gatekeeper once (`scripts/macos-install.sh` or System Settings → Open Anyway).
-  Ships dmg only (arm64 + x64). Cut a release: bump `version` in `package.json`, commit,
-  `git tag vX.Y.Z && git push origin vX.Y.Z`.
-
+  Ships **dmg** (site download) + **zip** (in-app updater) for arm64 and x64. Cut a release:
+  bump `version` in `package.json`, commit, `git tag vX.Y.Z && git push origin vX.Y.Z`.
+  Packaged apps check GitHub Releases and can replace themselves via Settings → Install.
 ---
 
 ## History & planning

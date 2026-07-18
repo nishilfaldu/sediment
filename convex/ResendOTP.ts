@@ -19,21 +19,25 @@ export const ResendOTP = Email({
   },
   async sendVerificationRequest({ identifier: email, provider, token }) {
     const resend = new ResendAPI(provider.apiKey as string)
+    // Keep this boring and transactional: code in the subject, no links/HTML.
+    // Marketing-y copy + casual subjects push Gmail toward Promotions/Spam.
     const { error } = await resend.emails.send({
       from: 'Sediment <auth@nishilfaldu.site>',
       to: [email],
-      subject: 'your sediment code',
+      subject: `Your Sediment sign-in code: ${token}`,
       text: [
-        'hey — here’s your sign-in code:',
+        'Your Sediment sign-in code:',
         '',
         token,
         '',
-        'it expires in 15 minutes.',
+        'This code expires in 15 minutes.',
         '',
-        'if that wasn’t you, you can ignore this.',
-        '',
-        '— nishil'
-      ].join('\n')
+        'If you did not request this, you can ignore this email.'
+      ].join('\n'),
+      headers: {
+        // Reduce Gmail threading OTP mail into older conversations.
+        'X-Entity-Ref-ID': `sediment-otp-${token}`
+      }
     })
 
     if (error) {

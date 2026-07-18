@@ -34,6 +34,20 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      - name: Verify production Convex URL is configured
+        run: |
+          if [ ! -f .env.production ]; then
+            echo "::error::Missing .env.production — packaged builds need VITE_CONVEX_URL"
+            exit 1
+          fi
+          # shellcheck disable=SC1091
+          set -a && . ./.env.production && set +a
+          if [ -z "${VITE_CONVEX_URL:-}" ]; then
+            echo "::error::VITE_CONVEX_URL is empty in .env.production"
+            exit 1
+          fi
+          echo "Packaging against ${VITE_CONVEX_URL}"
+
       - name: Build and publish macOS release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

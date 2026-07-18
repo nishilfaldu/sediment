@@ -145,12 +145,14 @@ async function sendWelcomeEmail(apiKey: string, email: string): Promise<void> {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Sediment <auth@nishilfaldu.site>',
+        // Separate identity from OTP (`auth@`) so mailbox filters can treat
+        // sign-in mail as transactional and this note as a personal/intro mail.
+        from: 'Nishil <hello@nishilfaldu.site>',
         to: [email],
-        subject: 'hey — thanks for trying sediment',
+        subject: 'Thanks for downloading Sediment',
         text: welcomeEmailText(),
         html: welcomeEmailHtml(),
-        reply_to: 'Nishil Faldu <auth@nishilfaldu.site>'
+        reply_to: 'Nishil Faldu <hello@nishilfaldu.site>'
       })
     })
     if (!resendRes.ok) {

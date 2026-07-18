@@ -5,6 +5,7 @@ import { closeCaptureToastWindow, destroyCaptureToast } from './services/capture
 import { registerClipboardWatcher, unregisterClipboardWatcher } from './services/clipboard-watcher'
 import { registerGlobalHotkey, unregisterGlobalHotkey } from './services/global-hotkey'
 import { createTray, destroyTray } from './services/tray'
+import { scheduleStartupUpdateCheck } from './services/updater'
 import { loadWindowState, manageWindowState } from './services/window-state'
 
 // Module-level handle so the tray (and dock re-activate) can reach the window.
@@ -76,7 +77,7 @@ app.whenReady().then(() => {
     app.setAppUserModelId('com.sediment')
   }
 
-  registerAllHandlers()
+  registerAllHandlers(() => mainWindow)
 
   // In dev: F12 toggles DevTools. In prod: block Cmd/Ctrl+R (accidental reload).
   app.on('browser-window-created', (_, window) => {
@@ -106,6 +107,9 @@ app.whenReady().then(() => {
 
   // Optional user-configured shortcut to bring Sediment back to the front
   registerGlobalHotkey(() => mainWindow)
+
+  // Packaged builds: quietly look for a newer GitHub release after startup.
+  scheduleStartupUpdateCheck(() => mainWindow)
 
   // On macOS, re-create the window when the dock icon is clicked with no windows open.
   app.on('activate', () => {
