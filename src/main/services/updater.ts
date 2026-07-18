@@ -1,7 +1,7 @@
 import { createWriteStream } from 'node:fs'
 import { mkdir, mkdtemp, readdir, rename, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { execFile } from 'node:child_process'
@@ -46,27 +46,43 @@ interface GithubRelease {
 type StatusListener = (status: UpdaterStatus) => void
 
 let status: UpdaterStatus = {
-  currentVersion: app.getVersion(),
+  // Don't read app.isPackaged at module load — Electron 39+ may not be ready yet.
+  currentVersion: '0.0.0',
   state: 'idle',
   availableVersion: null,
   progress: null,
   error: null,
-  supported: app.isPackaged
+  supported: false
 }
 
 let pendingZipUrl: string | null = null
+let installInFlight = false
+let hydrated = false
 const listeners = new Set<StatusListener>()
 
+function hydrateFromApp(): void {
+  if (hydrated) return
+  hydrated = true
+  status = {
+    ...status,
+    currentVersion: app.getVersion(),
+    supported: app.isPackaged
+  }
+}
+
 function setStatus(patch: Partial<UpdaterStatus>): void {
+  hydrateFromApp()
   status = { ...status, ...patch }
   for (const listener of listeners) listener(status)
 }
 
 export function getUpdaterStatus(): UpdaterStatus {
+  hydrateFromApp()
   return status
 }
 
 export function onUpdaterStatus(listener: StatusListener): () => void {
+  hydrateFromApp()
   listeners.add(listener)
   listener(status)
   return () => listeners.delete(listener)
@@ -101,10 +117,11 @@ function pickZipAsset(assets: GithubAsset[]): GithubAsset | null {
 /** Path to the running .app bundle (…/Sediment.app). */
 function appBundlePath(): string {
   // …/Sediment.app/Contents/MacOS/Sediment
-  return join(dirname(app.getPath('exe')), '..', '..')
+  return resolve(dirname(app.getPath('exe')), '..', '..')
 }
 
 export async function checkForUpdates(): Promise<UpdaterStatus> {
+  hydrateFromApp()
   if (!app.isPackaged) {
     setStatus({
       state: 'idle',
@@ -143,7 +160,8 @@ export async function checkForUpdates(): Promise<UpdaterStatus> {
       setStatus({
         state: 'up-to-date',
         availableVersion: null,
-        error: null
+        error: null,
+        currentVersion: current
       })
       return status
     }
@@ -157,7 +175,8 @@ export async function checkForUpdates(): Promise<UpdaterStatus> {
     setStatus({
       state: 'available',
       availableVersion: latest,
-      error: null
+      error: null,
+      currentVersion: current
     })
     return status
   } catch (err) {
@@ -169,12 +188,17 @@ export async function checkForUpdates(): Promise<UpdaterStatus> {
 }
 
 export async function downloadAndInstallUpdate(): Promise<UpdaterStatus> {
+  hydrateFromApp()
   if (!app.isPackaged) {
     setStatus({
       state: 'error',
       error: 'Updates are only available in the packaged app.',
       supported: false
     })
+    return status
+  }
+
+  if (installInFlight) {
     return status
   }
 
@@ -191,6 +215,7 @@ export async function downloadAndInstallUpdate(): Promise<UpdaterStatus> {
 
   const zipUrl = pendingZipUrl
   const version = status.availableVersion
+  installInFlight = true
 
   setStatus({ state: 'downloading', progress: 0, error: null })
 
@@ -231,6 +256,7 @@ export async function downloadAndInstallUpdate(): Promise<UpdaterStatus> {
     app.quit()
     return status
   } catch (err) {
+    installInFlight = false
     await rm(workDir, { recursive: true, force: true }).catch(() => undefined)
     const message = err instanceof Error ? err.message : 'Update install failed'
     setStatus({ state: 'error', error: message, progress: null })
@@ -284,13 +310,19 @@ async function findAppBundle(root: string): Promise<string | null> {
 
 /** Silent check a few seconds after launch; notifies the main window if available. */
 export function scheduleStartupUpdateCheck(getWindow: () => BrowserWindow | null): void {
-  if (!app.isPackaged) return
+  // Defer until after app ready so isPackaged / getVersion are reliable.
+  const run = (): void => {
+    if (!app.isPackaged) return
+    hydrateFromApp()
+    setTimeout(() => {
+      void checkForUpdates().then((result) => {
+        if (result.state !== 'available') return
+        const win = getWindow()
+        win?.webContents.send('updater:status', result)
+      })
+    }, 8_000)
+  }
 
-  setTimeout(() => {
-    void checkForUpdates().then((result) => {
-      if (result.state !== 'available') return
-      const win = getWindow()
-      win?.webContents.send('updater:status', result)
-    })
-  }, 8_000)
+  if (app.isReady()) run()
+  else void app.whenReady().then(run)
 }

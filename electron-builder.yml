@@ -15,7 +15,7 @@ mac:
   category: public.app-category.productivity
   entitlementsInherit: build/entitlements.mac.plist
   target:
-    # dmg = website / first install; zip = in-app updater (Squirrel needs zip metadata too)
+    # dmg = website / first install; zip = in-app updater swap
     - target: dmg
       arch:
         - arm64
@@ -42,5 +42,5 @@ publish:
   provider: github
   owner: nishilfaldu
   repo: sediment
-  # Publishes latest-mac.yml alongside artifacts for future electron-updater / notarized builds.
+  # latest-mac.yml is published for tooling; the app updater uses the zip assets directly.
   publishAutoUpdate: true
