@@ -3,17 +3,17 @@ const ISSUES = 'https://github.com/nishilfaldu/sediment/issues'
 const LINKEDIN = 'https://www.linkedin.com/in/nishilfaldu'
 
 const paragraphs = [
-  'hey — nishil here.',
+  'hey - nishil here.',
   'thanks for downloading sediment.',
   'quick story, if you care:',
-  'social apps are full of stuff worth keeping — articles, posts, little sparks. most of them even have a saves folder now. but those keep growing and growing, and when i actually need something later, it’s still a slog to dig it back up. i don’t want to scroll for hours just to get back to that one thing.',
-  'so sediment is an inspiration dashboard for the pieces i already know matter. the ones i’ll want later. the ones that would be a pain to hunt down on the platform where i first saw them — even in that app’s own saves.',
-  'copy something → it lands on today’s board. and when i need it, i can search across everything i’ve kept — instead of scrolling.',
+  'social apps are full of stuff worth keeping: articles, posts, little sparks. most of them even have a saves folder now. but those keep growing and growing, and when i actually need something later, it’s still a slog to dig it back up. i don’t want to scroll for hours just to get back to that one thing.',
+  'so sediment is an inspiration dashboard for the pieces i already know matter. the ones i’ll want later. the ones that would be a pain to hunt down on the platform where i first saw them - even in that app’s own saves.',
+  'copy something → it lands on today’s board. and when i need it, i can search across everything i’ve kept, instead of scrolling.',
   'honestly a big part of why i built this is family and friends. when we’re talking and i think of an article i read, i want to pull it up and share it right then. that’s the whole idea.',
   'if sediment ends up useful, starring the repo helps a lot.',
-  'got a feature idea or a bug? open an issue — or a pr. i’ll take a look.',
-  'and if you’d be into a small community where people share cool resources with each other — hit me up on linkedin. no pressure. i’m just gauging if anyone wants that.',
-  'see u.\n— nishil'
+  'got a feature idea or a bug? open an issue - or a pr. i’ll take a look.',
+  'and if you’d be into a small community where people share cool resources with each other, hit me up on linkedin. no pressure. i’m just gauging if anyone wants that.',
+  'see u.\n- nishil'
 ]
 
 function link(href: string, label: string): string {
@@ -44,7 +44,7 @@ export function welcomeEmailText(): string {
     `${paragraphs[9]} ${LINKEDIN}`,
     '',
     'see u.',
-    '— nishil'
+    '- nishil'
   ].join('\n')
 }
 
@@ -67,12 +67,12 @@ export function welcomeEmailHtml(): string {
     '',
     `if sediment ends up useful, ${link(REPO, 'starring the repo')} helps a lot.`,
     '',
-    `got a feature idea or a bug? ${link(ISSUES, 'open an issue')} — or ${link(REPO, 'a pr')}. i’ll take a look.`,
+    `got a feature idea or a bug? ${link(ISSUES, 'open an issue')} - or ${link(REPO, 'a pr')}. i’ll take a look.`,
     '',
-    `and if you’d be into a small community where people share cool resources with each other — ${link(LINKEDIN, 'hit me up on linkedin')}. no pressure. i’m just gauging if anyone wants that.`,
+    `and if you’d be into a small community where people share cool resources with each other, ${link(LINKEDIN, 'hit me up on linkedin')}. no pressure. i’m just gauging if anyone wants that.`,
     '',
     'see u.',
-    '— nishil'
+    '- nishil'
   ]
     .map((line) => (line === '' ? '<br>' : escapeThenBreak(line)))
     .join('\n')
