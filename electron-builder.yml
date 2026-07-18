@@ -24,8 +24,9 @@ mac:
       arch:
         - arm64
         - x64
+# Shared by dmg + zip (electron-builder has no root `zip:` key in v26).
+artifactName: ${name}-${version}-${arch}.${ext}
 dmg:
-  artifactName: ${name}-${version}-${arch}.${ext}
   # Drag-to-Applications layout
   contents:
     - x: 130
@@ -34,9 +35,6 @@ dmg:
       y: 180
       type: link
       path: /Applications
-# Zip used by the in-app updater to replace Sediment.app without a browser download.
-zip:
-  artifactName: ${name}-${version}-${arch}-mac.${ext}
 npmRebuild: true
 publish:
   provider: github

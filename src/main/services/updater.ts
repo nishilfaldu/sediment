@@ -106,9 +106,9 @@ function archToken(): string {
 
 function pickZipAsset(assets: GithubAsset[]): GithubAsset | null {
   const arch = archToken()
-  const zips = assets.filter((a) => a.name.endsWith('.zip') && a.name.includes('-mac'))
+  const zips = assets.filter((a) => a.name.endsWith('.zip'))
   return (
-    zips.find((a) => a.name.includes(`-${arch}-`)) ??
+    zips.find((a) => a.name.includes(`-${arch}.`) || a.name.includes(`-${arch}-`)) ??
     zips.find((a) => a.name.includes(arch)) ??
     null
   )
