@@ -3,7 +3,7 @@
 [![Electron](https://img.shields.io/badge/Electron-39-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-19-20232A?style=flat-square&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![SQLite](https://img.shields.io/badge/SQLite-local--first-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![Convex](https://img.shields.io/badge/Convex-cloud-EE342F?style=flat-square&logo=convex&logoColor=white)](https://convex.dev/)
 
 > A home for everything you want to keep. Copy a link from anywhere and it lands
 > on today's board. Jot a note when you need one. One day, one page. Things just
@@ -21,7 +21,7 @@ back, it is gone in practice — buried somewhere I will never think to look.
 So I wanted one place. Not a folder tree to maintain, not tags to invent, not a
 decision to make every time. Just one workspace per day. Whatever catches my eye
 goes there, and it piles up. Maybe I look back at a day, maybe I never do. The
-point is that capturing it costs nothing, and nothing leaves my machine.
+point is that capturing it costs nothing.
 
 The real payoff is later. When I am chasing an idea and that nagging feeling hits —
 *I came across something about this once* — I do not want to dig through five apps.
@@ -43,8 +43,8 @@ over time.
 | **URL presentation** | Known hosts (YouTube, X, etc.) get specimen tags on the card — derived from the URL at display time, not stored as separate types. |
 | **Rich previews** | Links and posts get titles, descriptions, and thumbnails pulled from their page metadata. |
 | **Grid layout** | Links appear in a responsive card grid. Notes stack in a single column. |
-| **Full-text search** | Search across everything you have ever saved, powered by SQLite FTS (`Cmd+K`). |
-| **Local-first** | Everything is stored on your device in SQLite. Nothing is uploaded anywhere. |
+| **Full-text search** | Search across everything you have ever saved (`Cmd+K`), via Convex search. |
+| **Cloud-synced** | Items and auth live in Convex. Sign in with email OTP; the same account works across devices. |
 
 ### What gets recognized
 
@@ -57,25 +57,23 @@ Clipboard capture handles URLs only. Notes are added with the **Add note** butto
 
 ## How it works
 
-Sediment is a macOS desktop app built on Electron, split across two JavaScript
-worlds that talk through a single typed bridge.
+Sediment is a macOS desktop app built on Electron, with a Convex cloud backend.
 
-- **Main process** (Node.js) owns the OS layer: the SQLite database, clipboard
-  watching, and fetching page metadata for links.
-- **Renderer process** (React) is all UI. It has no direct Node access; it talks
-  to the main process only through a typed `window.api` exposed by the preload
-  bridge.
+- **Main process** (Node.js) owns the OS layer only: clipboard watching, optional
+  global hotkey, capture toast, export dialogs, and in-app updates. It does **not**
+  own item CRUD.
+- **Renderer** (React) talks to Convex directly for items, days, search, and auth.
+  OS concerns go through a typed `window.api` preload bridge.
+- **Convex** stores items (and auth). Open Graph metadata is fetched in a Convex
+  Node action.
 
-When you copy a URL, the main process detects it, writes a row to SQLite, and
-notifies the renderer. The Links tab updates and an undo toast appears. For links
-it then fetches Open Graph metadata in the background and fills in the preview.
+When you copy a URL, the main process detects it and emits `clipboard:candidate`.
+The renderer creates the item in Convex; the Links tab updates and an undo toast
+appears. OG metadata fills in asynchronously.
 
 ```
-Renderer (React)        Preload               Main (Node.js)
-window.api.items   →    ipcRenderer.invoke →  ipcMain.handle → SQLite
-  .getByDay(dayId)  ←   Promise resolves   ←  returns rows
-
-clipboard copy     →    (poll)             →  detect URL → save → push event
+Renderer (React)  →  Convex queries/mutations  →  cloud DB
+Main (clipboard)  →  clipboard:candidate event  →  Renderer creates item
 ```
 
 ## Tech stack
@@ -85,11 +83,10 @@ clipboard copy     →    (poll)             →  detect URL → save → push e
 | Desktop shell | Electron 39 via electron-vite |
 | UI | React 19 + TypeScript |
 | Styling | Tailwind CSS v4 |
-| Database | SQLite (`better-sqlite3`), main process only |
-| ORM | Drizzle ORM + drizzle-kit |
-| State | TanStack Query (server state) + Zustand (UI state) |
+| Backend / DB | Convex + Convex Auth (Resend email OTP) |
+| Renderer data | Convex React hooks + Zustand (UI state) |
 | Board layout | Responsive grid (links) + single-column notes |
-| Page metadata | cheerio |
+| Page metadata | Convex Node action + cheerio |
 | Lint + format | Biome |
 | Package manager | Bun |
 
@@ -113,7 +110,9 @@ Requires [Bun](https://bun.sh/) and macOS.
 
 ```bash
 bun install
-bun dev          # Electron + renderer with hot reload
+bunx convex dev   # first time: link project, write .env.local
+bun run dev:all   # Convex watch + Electron with HMR
+# or: bun run dev:convex  and  bun dev  in two terminals
 ```
 
 Other useful scripts:
@@ -124,15 +123,16 @@ bun run typecheck          # tsc across main + renderer
 bun run build:mac          # package a macOS build locally
 ```
 
-Releases are automated: bump `version` in `package.json`, commit, then
+Packaged builds bake prod Convex from `.env.production`. Releases are automated:
+bump `version` in `package.json`, commit, then
 `git tag vX.Y.Z && git push origin vX.Y.Z` to trigger the GitHub Action.
 
 ## Status
 
 An ongoing personal project. The core loop — clipboard link capture, Links/Notes
-tabs, auto-detect, rich previews, per-day history, and full-text search — works
-today. I keep adding to it as I find new things I want to throw onto a page and
-forget about until I need them.
+tabs, auto-detect, rich previews, per-day history, cloud sync, and full-text
+search — works today. I keep adding to it as I find new things I want to throw
+onto a page and forget about until I need them.
 
 Built with [Claude Code](https://claude.com/claude-code). Released under the
 [MIT License](LICENSE).

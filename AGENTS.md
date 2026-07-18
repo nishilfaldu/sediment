@@ -8,14 +8,14 @@
 
 ## What is Sediment?
 
-A personal content collection desktop app for macOS. Throughout the day you encounter things worth saving — a tweet, an article, a quote, a YouTube video, an image. Instead of bookmarking to a forgotten folder, Sediment gives you **one canvas per day** where everything lands together. Copy anything → `Cmd+Shift+S` → it's saved.
+A personal content collection desktop app for macOS. Throughout the day you encounter things worth saving — a tweet, an article, a quote, a YouTube video, an image. Instead of bookmarking to a forgotten folder, Sediment gives you **one board per day** (Links + Notes tabs) where everything lands together. Copy a URL → clipboard watcher saves it to today; optional Settings hotkey brings the window forward.
 
 ---
 
 ## User Experience Philosophy
 
-- **Zero friction capture:** hotkey saves from anywhere, no app switching
-- **One day, one canvas:** opens to today; past days accessible but out of the way
+- **Zero friction capture:** clipboard URL watch (plus optional global hotkey to show the app)
+- **One day, one board:** opens to today; past days accessible but out of the way
 - **Auto-everything:** type detected, previews fetched, layout arranged automatically
 - **Cloud-synced:** data lives in Convex so the same account works across devices (web later)
 
@@ -30,7 +30,7 @@ A personal content collection desktop app for macOS. Throughout the day you enco
 | Styling | Tailwind CSS v4 (`@tailwindcss/vite`, no config file) |
 | Backend / DB | Convex (cloud) + Convex Auth (Resend email OTP) |
 | Renderer data | Convex React hooks (`useQuery` / `useMutation`) + Zustand v5 (UI state) |
-| Canvas layout | Freeform absolute positioning with custom pointer drag |
+| Board layout | Responsive link grid + single-column notes (Links / Notes tabs) |
 | OG metadata | Convex Node action (`convex/og.ts`) via cheerio |
 | Lint + format | Biome (replaces ESLint + Prettier) |
 | Package manager | Bun |
@@ -51,7 +51,7 @@ Source of truth for items and auth. Renderer talks to Convex directly. Day board
 Node.js OS layer only: clipboard watching, global hotkey, capture toast window, export save-dialog / clipboard write / `shell.openExternal`, local settings JSON. Does **not** own item CRUD anymore.
 
 ### Renderer Process (`src/renderer/`)
-React UI + Convex client (`ConvexAuthProvider`). Sign-in gate, then canvas. Clipboard capture: main detects URL → `clipboard:candidate` → renderer creates via Convex.
+React UI + Convex client (`ConvexAuthProvider`). Sign-in gate, then the day board. Clipboard capture: main detects URL → `clipboard:candidate` → renderer creates via Convex.
 
 ### Preload (`src/preload/`)
 Exposes typed `window.api` for OS concerns (settings, clipboard suppress, export helpers, toast). Not used for item/day CRUD.

@@ -15,23 +15,25 @@ Add an entry only when something turned out meaningfully better than the naive a
 
 ## IPC & types
 
-The renderer cannot import `src/main/db/schema.ts` (transitive `better-sqlite3`). Cross-process contracts live in `src/shared/`:
+Item / day / search CRUD is **not** on IPC — the renderer talks to Convex. `window.api` is OS-only (settings, clipboard suppress, export, toast, updater).
 
-- Domain types (`Item`, `ItemType`), IPC shapes (`Api`, `CreateItemPayload`), pure logic (`detectContent`)
+Cross-process contracts live in `src/shared/`:
+
+- Domain types (`Item`, `ItemType`), IPC shapes (`Api`), pure logic (`detectContent`, link presentation, share formatters)
 - Preload typed as `Api` — no `unknown` casts in renderer hooks
-
-Main derives DB input types from Drizzle (`Omit<NewItem, …>`). Shared types mirror the row shape for IPC.
 
 Enum unions: `as const` arrays in `@shared/types`, union derived with `(typeof ARR)[number]`.
 
 ---
 
-## Database
+## Database (Convex)
 
-- Derive `Item` / `NewItem` from `typeof items.$inferSelect` / `$inferInsert` in `schema.ts` — don't hand-write row interfaces on the main side.
-- Drizzle can't express FTS5 `MATCH`. Export `getSqlite()` alongside `getDb()`; use raw SQL only for FTS.
-- Schema bootstrap: `ensure-schema.sql` is applied via `sqlite.exec()` on every startup (no migration ledger). Never split the file on `;` — trigger bodies contain semicolons. Keep in sync with `schema.ts`; delete `sediment.db` in userData to reset locally.
-- Item types in the DB are only `text` and `link`. URL host tags (YouTube, X, etc.) live in `src/shared/link-presentation.ts` and are derived at display time — not stored on the row. `days` is just `id` (ISO date); today with no items is synthesized client-side until the first deposit. After a schema reset, delete `sediment.db` in userData (dev: `~/Library/Application Support/sediment/`, packaged: `.../Sediment/`).
+- Source of truth is `convex/schema.ts`: `authTables`, `items`, `dayDigests`, `downloadSignups`. No local SQLite / Drizzle.
+- Day boards are derived from each item's `dayId` (ISO local date string). There is no `days` table; empty today is client-side until the first item. Sidebar counts come from `dayDigests`.
+- Item types in the DB are only `text` and `link`. URL host tags (YouTube, X, etc.) live in `src/shared/link-presentation.ts` and are derived at display time — not stored on the row.
+- Search uses Convex `searchIndex` on `items.searchText` (`convex/search.ts`), not SQLite FTS. Keep `searchText` in sync when creating/updating items.
+- UI `createdAt` is Convex `_creationTime`. Auth every public function that touches user data.
+- Packaged builds bake `VITE_CONVEX_URL` from `.env.production` (prod). Dev keeps `.env.local`. After backend changes that should ship, run `bunx convex deploy` — release tags alone do not push Convex.
 
 ---
 
@@ -40,11 +42,10 @@ Enum unions: `as const` arrays in `@shared/types`, union derived with `(typeof A
 - Dev script unsets `ELECTRON_RUN_AS_NODE` (`"dev": "ELECTRON_RUN_AS_NODE= electron-vite dev"`). Cursor/VS Code terminals set it; without unsetting, no window opens.
 - Main process must output ESM (`format: 'es'`). Electron 36+ doesn't intercept CJS `require('electron')`.
 - Remove CSP `<meta>` tags from `index.html` — they break Vite HMR in dev. Security boundary is context isolation + preload.
-- `better-sqlite3` is compiled against Electron's V8 — pin versions together; `postinstall` runs `electron-rebuild`.
 - macOS releases must be ad-hoc signed (`identity: '-'`) when no Apple Developer cert — `identity: null` skips signing and Apple Silicon reports the app as "damaged". Ad-hoc is not notarization; users still need `xattr -cr`, right-click → Open, or System Settings → Open Anyway. Seamless installs need `APPLE_ID` + `CSC_LINK` secrets in GitHub for Developer ID sign + notarize (`electron-builder.notarized.yml`).
 - Dock / Applications icon comes from `build/icon.icns` (electron-builder `buildResources`). Tray uses `resources/trayTemplate.png` (16px) + `resources/trayTemplate-32.png` (@2x) as a macOS template image. Never leave the Electron default atom in `build/icon.*`.
-- Packaged builds bake `VITE_CONVEX_URL` from `.env.production` (prod). Dev keeps `.env.local`. After backend changes that should ship, run `bunx convex deploy` — release tags alone do not push Convex.
-- In-app updates (no Apple notarization required): releases must publish **dmg + zip** (`electron-builder.yml`). The packaged app checks GitHub `releases/latest`, downloads the arch zip, replaces the running `.app` with `ditto`, and relaunches. Browser DMGs still get Gatekeeper quarantine; in-app zip swaps usually do not.
+- In-app updates (no Apple notarization required): releases must publish **dmg + zip** (`electron-builder.yml`). Do **not** add a root `zip:` key — electron-builder 26 rejects it; use shared `artifactName`. The packaged app checks GitHub `releases/latest`, downloads the arch zip, replaces the running `.app` with `ditto`, and relaunches. Browser DMGs still get Gatekeeper quarantine; in-app zip swaps usually do not. Electron-builder often leaves the GitHub Release as a **draft** — publish it (`gh release edit vX.Y.Z --draft=false --latest`) or `/releases/latest` and the download gate stay on the previous version.
+- OTP verify form: never put a hidden `name="email"` input next to the code field — browsers autofill the address into the Code box. Pass email via FormData in the submit handler; keep the code input controlled and empty on step change.
 - After scaffolding, grep for unused template deps and remove them.
 
 ---
@@ -70,4 +71,4 @@ Packaged app paths: `dist/mac-arm64/Sediment.app` (Apple Silicon) or
 `dist/mac/Sediment.app` (Intel). Launch either with `--remote-debugging-port=9222`.
 
 Packaged app userData is `~/Library/Application Support/Sediment/` (productName),
-dev uses `.../sediment/` (package name) — separate databases.
+dev uses `.../sediment/` (package name) — separate local settings JSON; items themselves live in Convex.
