@@ -7,6 +7,7 @@ type AuthStep = 'email' | { email: string }
 export function SignInForm(): JSX.Element {
   const { signIn } = useAuthActions()
   const [step, setStep] = useState<AuthStep>('email')
+  const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
@@ -18,6 +19,7 @@ export function SignInForm(): JSX.Element {
     const email = String(formData.get('email') ?? '')
     try {
       await signIn('resend-otp', formData)
+      setCode('')
       setStep({ email })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not send code')
@@ -28,9 +30,14 @@ export function SignInForm(): JSX.Element {
 
   async function handleVerifyCode(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
+    if (step === 'email') return
     setError(null)
     setPending(true)
-    const formData = new FormData(event.currentTarget)
+    // Build FormData without a hidden `email` input — browsers otherwise autofill
+    // the code field with the address from that hidden field.
+    const formData = new FormData()
+    formData.set('email', step.email)
+    formData.set('code', code.trim())
     try {
       await signIn('resend-otp', formData)
     } catch (err) {
@@ -75,7 +82,12 @@ export function SignInForm(): JSX.Element {
             </button>
           </form>
         ) : (
-          <form className="mt-6 flex flex-col gap-3" onSubmit={(e) => void handleVerifyCode(e)}>
+          <form
+            key={`code-${step.email}`}
+            className="mt-6 flex flex-col gap-3"
+            autoComplete="off"
+            onSubmit={(e) => void handleVerifyCode(e)}
+          >
             <label className="flex flex-col gap-1 font-sans text-xs text-muted">
               Code
               <input
@@ -86,10 +98,11 @@ export function SignInForm(): JSX.Element {
                 required
                 autoComplete="one-time-code"
                 autoFocus
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
                 className="border border-ui bg-surface px-3 py-2 font-mono text-sm tracking-widest text-primary outline-none focus:border-primary"
               />
             </label>
-            <input name="email" type="hidden" value={step.email} />
 
             {error ? <p className="font-sans text-xs text-iron">{error}</p> : null}
 
@@ -106,6 +119,7 @@ export function SignInForm(): JSX.Element {
               className="font-sans text-xs text-secondary underline-offset-2 hover:text-primary hover:underline"
               onClick={() => {
                 setError(null)
+                setCode('')
                 setStep('email')
               }}
             >
