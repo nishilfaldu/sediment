@@ -3,7 +3,7 @@ import type {
   ClipboardCandidatePayload,
   ClipboardUndoPayload
 } from '@shared/clipboard-capture'
-import type { Api } from '@shared/ipc'
+import type { Api, UpdaterStatus } from '@shared/ipc'
 import { contextBridge, ipcRenderer } from 'electron'
 
 const api: Api = {
@@ -18,6 +18,11 @@ const api: Api = {
     get: () => ipcRenderer.invoke('settings:get'),
     setGlobalHotkey: (accelerator: string | null) =>
       ipcRenderer.invoke('settings:setGlobalHotkey', accelerator)
+  },
+  updater: {
+    getStatus: () => ipcRenderer.invoke('updater:getStatus'),
+    check: () => ipcRenderer.invoke('updater:check'),
+    install: () => ipcRenderer.invoke('updater:install')
   },
   clipboard: {
     suppress: (url: string) => ipcRenderer.invoke('clipboard:suppress', url)
@@ -46,6 +51,11 @@ const api: Api = {
       const handler = (_e: Electron.IpcRendererEvent, payload: CaptureToastShow) => cb(payload)
       ipcRenderer.on('capture-toast:show', handler)
       return () => ipcRenderer.removeListener('capture-toast:show', handler)
+    },
+    updaterStatus: (cb: (payload: UpdaterStatus) => void) => {
+      const handler = (_e: Electron.IpcRendererEvent, payload: UpdaterStatus) => cb(payload)
+      ipcRenderer.on('updater:status', handler)
+      return () => ipcRenderer.removeListener('updater:status', handler)
     }
   }
 }

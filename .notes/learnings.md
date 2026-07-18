@@ -42,8 +42,9 @@ Enum unions: `as const` arrays in `@shared/types`, union derived with `(typeof A
 - Remove CSP `<meta>` tags from `index.html` — they break Vite HMR in dev. Security boundary is context isolation + preload.
 - `better-sqlite3` is compiled against Electron's V8 — pin versions together; `postinstall` runs `electron-rebuild`.
 - macOS releases must be ad-hoc signed (`identity: '-'`) when no Apple Developer cert — `identity: null` skips signing and Apple Silicon reports the app as "damaged". Ad-hoc is not notarization; users still need `xattr -cr`, right-click → Open, or System Settings → Open Anyway. Seamless installs need `APPLE_ID` + `CSC_LINK` secrets in GitHub for Developer ID sign + notarize (`electron-builder.notarized.yml`).
-- Dock / Applications icon comes from `build/icon.icns` (electron-builder `buildResources`). Tray uses `resources/trayTemplate.png` as a macOS template image (black on transparent). Never leave the Electron default atom in `build/icon.*`.
+- Dock / Applications icon comes from `build/icon.icns` (electron-builder `buildResources`). Tray uses `resources/trayTemplate.png` (16px) + `resources/trayTemplate-32.png` (@2x) as a macOS template image. Never leave the Electron default atom in `build/icon.*`.
 - Packaged builds bake `VITE_CONVEX_URL` from `.env.production` (prod). Dev keeps `.env.local`. After backend changes that should ship, run `bunx convex deploy` — release tags alone do not push Convex.
+- In-app updates (no Apple notarization required): releases must publish **dmg + zip** (`electron-builder.yml`). The packaged app checks GitHub `releases/latest`, downloads the arch zip, replaces the running `.app` with `ditto`, and relaunches. Browser DMGs still get Gatekeeper quarantine; in-app zip swaps usually do not.
 - After scaffolding, grep for unused template deps and remove them.
 
 ---

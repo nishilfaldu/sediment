@@ -92,9 +92,9 @@ Requires `VITE_CONVEX_URL` in `.env.local` (written by `convex dev`) for local d
   `CSC_LINK`, and `CSC_KEY_PASSWORD` set, builds are Developer ID signed and notarized
   (opens normally). Without those secrets, ad-hoc signing is used and users must bypass
   Gatekeeper once (`scripts/macos-install.sh` or System Settings → Open Anyway).
-  Ships dmg only (arm64 + x64). Cut a release: bump `version` in `package.json`, commit,
-  `git tag vX.Y.Z && git push origin vX.Y.Z`.
-
+  Ships **dmg** (site download) + **zip** (in-app updater) for arm64 and x64. Cut a release:
+  bump `version` in `package.json`, commit, `git tag vX.Y.Z && git push origin vX.Y.Z`.
+  Packaged apps check GitHub Releases and can replace themselves via Settings → Install.
 ---
 
 ## History & planning

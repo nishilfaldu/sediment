@@ -27,6 +27,24 @@ export interface SetHotkeyResult {
   error: string | null
 }
 
+export type UpdaterState =
+  | 'idle'
+  | 'checking'
+  | 'up-to-date'
+  | 'available'
+  | 'downloading'
+  | 'installing'
+  | 'error'
+
+export interface UpdaterStatus {
+  currentVersion: string
+  state: UpdaterState
+  availableVersion: string | null
+  progress: number | null
+  error: string | null
+  supported: boolean
+}
+
 /** OS-only bridge — item/day/search CRUD lives in Convex. */
 export interface Api {
   export: {
@@ -37,6 +55,11 @@ export interface Api {
   settings: {
     get: () => Promise<AppSettings>
     setGlobalHotkey: (accelerator: string | null) => Promise<SetHotkeyResult>
+  }
+  updater: {
+    getStatus: () => Promise<UpdaterStatus>
+    check: () => Promise<UpdaterStatus>
+    install: () => Promise<UpdaterStatus>
   }
   clipboard: {
     suppress: (url: string) => Promise<void>
@@ -56,5 +79,6 @@ export interface Api {
     clipboardCandidate: (cb: (payload: ClipboardCandidatePayload) => void) => () => void
     clipboardUndoRequest: (cb: (payload: ClipboardUndoPayload) => void) => () => void
     captureToastShow: (cb: (payload: CaptureToastShow) => void) => () => void
+    updaterStatus: (cb: (payload: UpdaterStatus) => void) => () => void
   }
 }
